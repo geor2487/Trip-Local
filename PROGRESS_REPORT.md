@@ -1,46 +1,52 @@
-# TripLocal Phase 1 — 進捗レポート
+# TripLocal — 全体スコープ進捗レポート
 
 **報告日**: 2026-03-02
 **報告者**: 開発チーム
-**フェーズ**: Phase 1（Today MVP）
+**納期**: 2026-02-28（2日超過）
 
 ---
 
 ## サマリー
 
-Phase 1 のバックエンド・フロントエンド実装がほぼ完了。
-コア機能（宿泊検索 → 予約 → Stripe 決済 → メール通知 → キャンセル）のコードは一通り揃っている。
-結合テスト・動作確認が残っている状況。
+元依頼の全スコープに対する進捗は **約 70%**。
+Phase 1 コア機能（宿泊検索 → 予約 → Stripe 決済 → メール通知 → キャンセル）は完成済み。
+3/2 にイベント予約システム、オーナー管理画面、管理者ダッシュボード、i18n（日英）を追加実装し、
+未実装だったスコープの大部分をコードレベルでカバーした。
+残りは結合テスト・デプロイ・Google OAuth・運用マニュアル。
 
 ---
 
-## 全体進捗: **約 85%**
+## 全体進捗: **約 70%**
 
-| カテゴリ | 進捗 | 備考 |
-|----------|------|------|
-| DB スキーマ + マイグレーション | 100% | Prisma + Neon PostgreSQL。スキーマ適用済み |
-| 認証 API（JWT） | 100% | 登録・ログイン・トークンリフレッシュ実装済み |
-| 施設一覧・詳細 API | 100% | エリア検索・空き状況カレンダーAPI 含む |
-| 予約作成 API | 100% | SELECT FOR UPDATE + トランザクションによる二重予約防止済み |
-| Stripe 決済 | 100% | PaymentIntent 作成（予約時）+ Webhook（succeeded / failed）対応済み |
-| キャンセル API | 100% | 統一キャンセルポリシー（7日前100% / 3日前50% / 2日前〜0%）+ Stripe 返金処理済み |
-| メール通知（SendGrid） | 100% | 予約確認メール + キャンセル確認メール。HTML/テキスト両対応 |
-| シードデータ | 100% | 施設・部屋のテストデータ準備済み |
-| フロントエンド画面 | 100% | 4画面実装済み（トップ / 施設詳細 / 認証 / マイ予約） |
-| API クライアント | 100% | 自動トークンリフレッシュ付き |
-| デザイン・CSS | 100% | デザイントークン適用済み。フォントは Noto Serif JP に変更済み |
-| Git リポジトリ | 100% | 初期化＋初回コミット完了 |
-| Google OAuth | 0% | スキーマ対応済みだが API 未実装。Phase 1 では JWT 認証のみ |
-| 結合テスト（E2E） | 0% | 未着手 |
-| デプロイ | 0% | 未着手（Vercel + Render 予定） |
+### 機能別ステータス
+
+| # | 要件（依頼文ベース） | 優先度 | 進捗 | 備考 |
+|---|----------------------|--------|------|------|
+| 1 | 宿泊施設 検索・一覧 | P0 | 100% | エリア・日程・人数検索、カード表示 |
+| 2 | 施設詳細・画像ギャラリー | P0 | 100% | カレンダー空き状況表示含む |
+| 3 | 予約作成（二重予約防止） | P0 | 100% | SELECT FOR UPDATE + トランザクション |
+| 4 | Stripe 決済（PaymentIntent） | P0 | 100% | 作成 + Webhook（succeeded / failed） |
+| 5 | キャンセル・返金 | P0 | 100% | 7日前100% / 3〜6日50% / 2日以内0% + Stripe Refund |
+| 6 | 予約確認メール（SendGrid） | P0 | 100% | Webhook 後に自動送信。HTML + テキスト |
+| 7 | キャンセル確認メール（SendGrid） | P0 | 100% | 返金額・返金率を記載 |
+| 8 | JWT 認証（登録・ログイン・リフレッシュ） | P0 | 100% | アクセストークン + リフレッシュトークン |
+| 9 | Google OAuth | P1 | 0% | スキーマ対応済み。Google Cloud Console の client_id が必要 |
+| 10 | 体験・イベント予約システム | P0 | 90% | スキーマ + API + フロントエンド実装済み。DB マイグレーション未適用 |
+| 11 | イベント Stripe 決済 | P1 | 80% | PaymentIntent 作成済み。Webhook 処理は宿泊と共通化が必要 |
+| 12 | オーナー管理画面 | P0 | 90% | 施設CRUD + 部屋管理 + 予約一覧。API + フロントエンド実装済み |
+| 13 | 管理者ダッシュボード | P1 | 90% | 統計 + ユーザー/施設/イベント/予約管理。API + フロントエンド実装済み |
+| 14 | 多言語対応（i18n） | P1 | 60% | i18next 導入済み。新規ページは対応済み、既存4ページは未対応 |
+| 15 | レスポンシブデザイン | P0 | 80% | 全画面モバイル対応済み。細部の調整が必要な可能性あり |
+| 16 | テスト（ユニット + E2E） | P1 | 0% | 未着手 |
+| 17 | デプロイ（Vercel + Render） | P0 | 0% | 未着手 |
+| 18 | 運用マニュアル | P2 | 0% | 未着手 |
+| 19 | シードデータ（イベント） | P2 | 0% | 宿泊施設のシードデータのみ存在 |
 
 ---
 
-## 実装済み機能の詳細
+## API エンドポイント一覧
 
-### バックエンド（Express 5 + TypeScript）
-
-**API エンドポイント一覧**:
+### 認証（`/api/auth`）
 
 | メソッド | パス | 機能 | 認証 |
 |----------|------|------|------|
@@ -48,47 +54,91 @@ Phase 1 のバックエンド・フロントエンド実装がほぼ完了。
 | POST | `/api/auth/login` | ログイン | 不要 |
 | POST | `/api/auth/refresh` | トークンリフレッシュ | 不要 |
 | GET | `/api/auth/me` | ユーザー情報取得 | 必要 |
+
+### 宿泊施設（`/api/accommodations`）
+
+| メソッド | パス | 機能 | 認証 |
+|----------|------|------|------|
 | GET | `/api/accommodations` | 施設一覧（検索） | 不要 |
 | GET | `/api/accommodations/:id` | 施設詳細 | 不要 |
 | GET | `/api/accommodations/:id/availability` | 空き状況 | 不要 |
+
+### 予約（`/api/bookings`）
+
+| メソッド | パス | 機能 | 認証 |
+|----------|------|------|------|
 | GET | `/api/bookings` | 予約一覧 | 必要 |
-| POST | `/api/bookings` | 予約作成 | 必要 |
+| POST | `/api/bookings` | 予約作成 + Stripe PI 作成 | 必要 |
 | GET | `/api/bookings/:id` | 予約詳細 | 必要 |
-| PUT | `/api/bookings/:id/cancel` | キャンセル | 必要 |
-| POST | `/api/payments/webhook` | Stripe Webhook | 不要（署名検証） |
+| PUT | `/api/bookings/:id/cancel` | キャンセル + 返金 + メール | 必要 |
 
-**セキュリティ対策**:
-- Helmet（HTTP ヘッダー保護）
-- CORS 設定（フロントエンド URL 制限）
-- レート制限（認証エンドポイント: 15分あたり20リクエスト）
-- Stripe Webhook 署名検証
-- SELECT FOR UPDATE による二重予約防止
+### 決済（`/api/payments`）
 
-**メール通知（SendGrid）**:
-- 予約確認メール: Stripe Webhook（`payment_intent.succeeded`）受信後に自動送信
-- キャンセル確認メール: キャンセル API 実行後に自動送信（返金額・返金率を含む）
-- HTML + プレーンテキストの両形式対応
-- キャンセルポリシーをメール本文にも記載（設計仕様の「3箇所表示」要件に対応）
+| メソッド | パス | 機能 | 認証 |
+|----------|------|------|------|
+| POST | `/api/payments/webhook` | Stripe Webhook | 署名検証 |
 
-### フロントエンド（React 19 + Vite + TypeScript）
+### オーナー管理（`/api/owner`）— 新規追加
 
-**画面構成**:
+| メソッド | パス | 機能 | 認証 |
+|----------|------|------|------|
+| GET | `/api/owner` | オーナーの施設一覧 | OWNER/ADMIN |
+| POST | `/api/owner` | 施設作成 | OWNER/ADMIN |
+| PUT | `/api/owner/:id` | 施設更新 | OWNER/ADMIN |
+| DELETE | `/api/owner/:id` | 施設停止（ソフトデリート） | OWNER/ADMIN |
+| GET | `/api/owner/:id/rooms` | 部屋一覧 | OWNER/ADMIN |
+| POST | `/api/owner/:id/rooms` | 部屋作成 | OWNER/ADMIN |
+| PUT | `/api/owner/:id/rooms/:roomId` | 部屋更新 | OWNER/ADMIN |
+| GET | `/api/owner/:id/bookings` | 施設の予約一覧 | OWNER/ADMIN |
 
-| 画面 | ファイル | 主要機能 |
-|------|----------|----------|
-| トップ / 検索 | `HomePage.tsx` (208行) | エリア・日程・人数で施設検索、注目施設カード表示 |
-| 施設詳細 | `PropertyDetailPage.tsx` (322行) | 画像・施設情報・空き状況カレンダー・予約フォーム |
-| 認証 | `AuthPage.tsx` (148行) | ログイン・新規登録フォーム |
-| マイ予約 | `MyBookingsPage.tsx` (247行) | 予約一覧（タブ切替）・キャンセル機能 |
+### イベント（`/api/events`）— 新規追加
 
-**共通基盤**:
-- API クライアント（401 時の自動トークンリフレッシュ）
-- 認証 Context（ログイン状態のグローバル管理）
-- React Query（データフェッチ + キャッシュ）
+| メソッド | パス | 機能 | 認証 |
+|----------|------|------|------|
+| GET | `/api/events` | イベント一覧（公開） | 不要 |
+| GET | `/api/events/my/registrations` | マイ参加一覧 | 必要 |
+| GET | `/api/events/:id` | イベント詳細 | 不要 |
+| POST | `/api/events/:id/register` | イベント参加登録 | 必要 |
+| PUT | `/api/events/:id/cancel` | 参加キャンセル | 必要 |
+| POST | `/api/events/organizer` | イベント作成 | ORGANIZER/ADMIN |
+| PUT | `/api/events/organizer/:id` | イベント更新 | ORGANIZER/ADMIN |
+| PUT | `/api/events/organizer/:id/publish` | イベント公開 | ORGANIZER/ADMIN |
+| PUT | `/api/events/organizer/:id/cancel` | イベント中止 | ORGANIZER/ADMIN |
+| GET | `/api/events/organizer/:id/participants` | 参加者一覧 | ORGANIZER/ADMIN |
+
+### 管理者（`/api/admin`）— 新規追加
+
+| メソッド | パス | 機能 | 認証 |
+|----------|------|------|------|
+| GET | `/api/admin/stats` | ダッシュボード統計 | ADMIN |
+| GET | `/api/admin/users` | ユーザー一覧 | ADMIN |
+| PUT | `/api/admin/users/:id/role` | ロール変更 | ADMIN |
+| PUT | `/api/admin/users/:id/deactivate` | ユーザー無効化 | ADMIN |
+| GET | `/api/admin/accommodations` | 施設一覧（管理用） | ADMIN |
+| PUT | `/api/admin/accommodations/:id/status` | 施設ステータス変更 | ADMIN |
+| GET | `/api/admin/events` | イベント一覧（管理用） | ADMIN |
+| PUT | `/api/admin/events/:id/status` | イベントステータス変更 | ADMIN |
+| GET | `/api/admin/bookings` | 予約一覧（管理用） | ADMIN |
+| GET | `/api/admin/payments` | 支払い一覧（管理用） | ADMIN |
 
 ---
 
-## 環境変数（設定状況）
+## フロントエンド画面構成
+
+| 画面 | ファイル | 主要機能 | i18n |
+|------|----------|----------|------|
+| トップ / 検索 | `HomePage.tsx` | エリア・日程・人数で施設検索 | 未対応 |
+| 施設詳細 | `PropertyDetailPage.tsx` | 画像・空き状況カレンダー・予約フォーム | 未対応 |
+| 認証 | `AuthPage.tsx` | ログイン・新規登録 | 未対応 |
+| マイ予約 | `MyBookingsPage.tsx` | 予約一覧・キャンセル | 未対応 |
+| イベント一覧 | `EventsPage.tsx` | カテゴリ・キーワード・エリアで検索 | 対応済み |
+| イベント詳細 | `EventDetailPage.tsx` | 参加登録・定員表示 | 対応済み |
+| オーナー管理 | `OwnerDashboardPage.tsx` | 施設CRUD・部屋管理・予約一覧 | 対応済み |
+| 管理者画面 | `AdminDashboardPage.tsx` | 統計・ユーザー/施設/イベント/予約管理 | 対応済み |
+
+---
+
+## 環境変数
 
 | 変数名 | 状態 |
 |--------|------|
@@ -98,47 +148,50 @@ Phase 1 のバックエンド・フロントエンド実装がほぼ完了。
 | `STRIPE_SECRET_KEY` | 設定済み |
 | `STRIPE_WEBHOOK_SECRET` | 設定済み |
 | `SENDGRID_API_KEY` | 設定済み |
-| `FROM_EMAIL` | 未設定（デフォルト: noreply@triplocal.jp。SendGrid ドメイン認証後に設定） |
-| `GOOGLE_CLIENT_ID` | 未設定（Phase 1 スコープ外） |
+| `FROM_EMAIL` | 未設定（デフォルト: noreply@triplocal.jp） |
+| `GOOGLE_CLIENT_ID` | 未設定（Google Cloud Console で取得が必要） |
 
 ---
 
-## 未完了タスク（残作業）
+## Git コミット履歴
 
-### 優先度: 高
+| コミット | 内容 | ファイル数 |
+|----------|------|-----------|
+| `1b86777` | Phase 1 MVP initial commit | 43 files |
+| `78d315c` | Add SendGrid email notifications | 6 files |
+| `82988b1` | Add event system, owner dashboard, admin panel, and i18n | 23 files (+5,830行) |
 
-| タスク | 見積もり | ブロッカー |
-|--------|----------|-----------|
-| バックエンド起動 + フロントエンド接続の動作確認 | — | なし |
-| Stripe テストモードでの決済フロー確認 | — | なし |
-| SendGrid ドメイン認証 + メール送信テスト | — | ドメイン認証が必要（未実施の場合サンドボックス制限あり） |
-| シードデータ投入 → 検索 → 予約 → 決済 → メール受信の一気通貫テスト | — | 上記すべて |
+---
+
+## 未完了タスク
+
+### 優先度: 高（リリースブロッカー）
+
+| タスク | ブロッカー |
+|--------|-----------|
+| Event テーブルの DB マイグレーション適用（`prisma db push`） | なし |
+| バックエンド起動 + フロントエンド接続の動作確認 | マイグレーション完了後 |
+| Stripe テストモードでの決済フロー確認（宿泊 + イベント） | 動作確認環境 |
+| SendGrid ドメイン認証 + メール送信テスト | ドメイン認証が必要 |
+| 一気通貫テスト（検索 → 予約 → 決済 → メール → キャンセル） | 上記すべて |
+| デプロイ（Vercel + Render） | 動作確認完了後 |
 
 ### 優先度: 中
 
-| タスク | 見積もり | ブロッカー |
-|--------|----------|-----------|
-| Vercel（FE）+ Render（BE）へのデプロイ | — | 動作確認完了後 |
-| Stripe Webhook のデプロイ先 URL 設定 | — | デプロイ先確定後 |
+| タスク | ブロッカー |
+|--------|-----------|
+| イベント用 Stripe Webhook 処理の統合 | なし |
+| 既存4ページの i18n 対応（t() 関数への置き換え） | なし |
+| Google OAuth 実装 | Google Cloud Console client_id |
+| イベントのシードデータ作成 | なし |
 
 ### 優先度: 低（Phase 2 以降でも可）
 
-| タスク | 見積もり | ブロッカー |
-|--------|----------|-----------|
-| Google OAuth 実装 | — | Google Cloud Console で client_id 取得が必要 |
-| React Router 導入（現在は state ベースルーティング） | — | なし |
-
----
-
-## 技術的なメモ
-
-1. **決済フローの構造**: PaymentIntent の作成は予約作成 API（`POST /api/bookings`）内で行い、Webhook 受信は別エンドポイント（`POST /api/payments/webhook`）で処理する設計。Webhook が `payment_intent.succeeded` を受信した時点で予約ステータスが `CONFIRMED` に更新される。
-
-2. **フォント変更**: 当初予定の `Source Han Serif Japanese` ではなく `Noto Serif JP`（Variable Font）を採用。同じ源ノ明朝ベースのフォントだが、Variable Font 対応により軽量。
-
-3. **ルーティング**: React Router は未導入。`useState` ベースの簡易ルーティングで実装されている。Phase 1 の4画面であれば問題ないが、Phase 2 以降で画面が増える場合は React Router への移行を推奨。
-
-4. **メール通知**: メール送信は非同期で実行し、送信失敗時はログ出力のみ（API レスポンスには影響しない）。メール送信失敗が予約・キャンセル処理をブロックしない設計。SendGrid ドメイン認証が未完了の場合はサンドボックス制限（認証済みメールアドレスのみに送信可能）がかかる点に注意。
+| タスク | ブロッカー |
+|--------|-----------|
+| React Router 導入（現在は state ベースルーティング） | なし |
+| ユニットテスト + E2E テスト | なし |
+| 運用マニュアル作成 | なし |
 
 ---
 
@@ -146,7 +199,23 @@ Phase 1 のバックエンド・フロントエンド実装がほぼ完了。
 
 | リスク | 影響 | 対策 |
 |--------|------|------|
-| 結合テスト未実施 | 画面間の連携不具合の可能性 | 動作確認を優先的に実施 |
-| Google OAuth 未実装 | ソーシャルログインが使えない | Phase 1 は email/password 認証で代替 |
-| state ベースルーティング | ブラウザの戻る/進むが効かない | Phase 2 で React Router 導入予定 |
-| SendGrid ドメイン認証未実施 | 本番でメール到達率が低下する可能性 | デプロイ前にドメイン認証を完了させる |
+| 納期2日超過 | クライアント対応が必要 | 現状を正直に報告し、残作業の見積もりを提示 |
+| 結合テスト未実施 | 画面間の連携不具合の可能性 | 動作確認を最優先で実施 |
+| Event テーブル未マイグレーション | イベント機能が動作しない | `prisma db push` で即時適用可能 |
+| イベント Webhook 未統合 | 有料イベントの決済確定が動作しない | payments.ts に EventRegistration 用のハンドラ追加が必要 |
+| state ベースルーティング | ブラウザ履歴が効かない | Phase 2 で React Router 導入 |
+| SendGrid ドメイン認証未実施 | 本番でメール到達率低下 | デプロイ前にドメイン認証完了 |
+
+---
+
+## 技術メモ
+
+1. **決済フロー**: PaymentIntent の作成は予約 API 内で行い、Webhook は別エンドポイントで受信。`payment_intent.succeeded` で予約ステータスを `CONFIRMED` に更新後、確認メールを送信。
+
+2. **フォント**: `Noto Serif JP`（Variable Font）を採用。源ノ明朝ベースで `Source Han Serif Japanese` と同等だが軽量。
+
+3. **ロールベースアクセス制御**: `requireRole()` ミドルウェアで USER / OWNER / ORGANIZER / ADMIN の4ロールを制御。オーナー管理ではオーナーシップ検証ヘルパーで施設の所有者を確認（ADMIN はスキップ）。
+
+4. **メール通知**: 非同期実行で送信失敗は API レスポンスをブロックしない。ログ出力のみ。
+
+5. **イベント登録**: 無料イベントは即時 CONFIRMED + チケットコード発行。有料イベントは PaymentIntent 作成 → PENDING → Webhook で確定。
