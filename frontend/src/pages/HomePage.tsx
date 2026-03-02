@@ -24,11 +24,6 @@ interface AccommodationCard {
   maxCapacity: number | null;
 }
 
-interface RegionHero {
-  nameKey: string;
-  image: string;
-}
-
 const REGION_HEROES: Record<string, { nameKey: string; image: string }> = {
   hokkaido: { nameKey: 'home.regions.hokkaido.landmark', image: 'https://images.unsplash.com/photo-1534678275982-a3989afe85e6?w=1200' },
   tohoku:   { nameKey: 'home.regions.tohoku.landmark',   image: 'https://images.unsplash.com/photo-1670736990625-ac75a09397cd?w=1200' },
@@ -186,7 +181,7 @@ export function HomePage({ onNavigate, searchParams }: HomePageProps) {
           <div className="hero-img-main" key={activeRegion}>
             <img
               src={currentHero.image}
-              alt={currentHero.name}
+              alt={t(currentHero.nameKey)}
             />
             <div className="hero-caption">
               <span className="hero-caption-name">{t(currentHero.nameKey)}</span>
@@ -232,7 +227,7 @@ export function HomePage({ onNavigate, searchParams }: HomePageProps) {
               <p className="listing-region">{tPrefecture(a.prefecture, i18n.language)} · {tCity(a.city, i18n.language)}</p>
               <h3 className="listing-name">{tName(a.name, i18n.language)}</h3>
               <div className="listing-meta">
-                <span>{t('home.maxGuests', { count: a.maxCapacity })}</span>
+                <span>{t('home.maxGuests', { count: a.maxCapacity ?? 0 })}</span>
               </div>
               <div className="listing-price">
                 <span className="price-num">¥{a.minPrice?.toLocaleString() ?? '—'}{i18n.language === 'ja' ? '〜' : '+'}</span>

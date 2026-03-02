@@ -182,21 +182,6 @@ function UsersTab() {
   const [page, setPage] = useState(1);
   const [confirmTarget, setConfirmTarget] = useState<User | null>(null);
 
-  function formatDate(dateStr: string) {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString(i18n.language, {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-  }
-
-  function statusBadge(status: string) {
-    const cls = STATUS_BADGE_CLS[status] || 'badge-gray';
-    const label = t(`admin.statuses.${status}`, { defaultValue: status });
-    return <span className={`admin-badge ${cls}`}>{label}</span>;
-  }
-
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'users', page],
     queryFn: () =>
@@ -327,12 +312,6 @@ function AccommodationsTab() {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
-
-  function statusBadge(status: string) {
-    const cls = STATUS_BADGE_CLS[status] || 'badge-gray';
-    const label = t(`admin.statuses.${status}`, { defaultValue: status });
-    return <span className={`admin-badge ${cls}`}>{label}</span>;
-  }
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'accommodations', page],
