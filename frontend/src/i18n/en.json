@@ -21,6 +21,7 @@
     "checkOut": "Check-out",
     "guests": "Guests",
     "adults": "Adults",
+    "children": "Children",
     "searchButton": "Search stays",
     "featured": "Featured Properties",
     "maxGuests": "Up to {{count}} guests",

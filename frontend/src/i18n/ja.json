@@ -21,6 +21,7 @@
     "checkOut": "チェックアウト",
     "guests": "宿泊人数",
     "adults": "大人",
+    "children": "子供",
     "searchButton": "宿泊先を探す",
     "featured": "注目の宿泊施設",
     "maxGuests": "最大{{count}}名",

@@ -40,6 +40,7 @@ export function HomePage({ onNavigate, searchParams }: HomePageProps) {
   const [checkIn, setCheckIn] = useState(searchParams?.checkIn ?? '');
   const [checkOut, setCheckOut] = useState(searchParams?.checkOut ?? '');
   const [guests, setGuests] = useState(2);
+  const [children, setChildren] = useState(0);
   const [activeRegion, setActiveRegion] = useState('hokkaido');
   const [searchQuery, setSearchQuery] = useState<Record<string, string>>(
     searchParams ? Object.fromEntries(Object.entries(searchParams).filter(([, v]) => v)) : {}
@@ -102,11 +103,16 @@ export function HomePage({ onNavigate, searchParams }: HomePageProps) {
     if (checkIn) params.checkIn = checkIn;
     if (checkOut) params.checkOut = checkOut;
     if (guests) params.guests = String(guests);
+    if (children) params.children = String(children);
     setSearchQuery(params);
   };
 
   const updateGuests = (delta: number) => {
     setGuests((g) => Math.max(1, Math.min(10, g + delta)));
+  };
+
+  const updateChildren = (delta: number) => {
+    setChildren((c) => Math.max(0, Math.min(10, c + delta)));
   };
 
   return (
@@ -170,6 +176,14 @@ export function HomePage({ onNavigate, searchParams }: HomePageProps) {
                   <button type="button" className="guests-btn" onClick={() => updateGuests(-1)}>-</button>
                   <span className="guests-count">{guests}</span>
                   <button type="button" className="guests-btn" onClick={() => updateGuests(1)}>+</button>
+                </div>
+              </div>
+              <div className="guests-row">
+                <span className="guests-label">{t('home.children')}</span>
+                <div className="guests-ctrl">
+                  <button type="button" className="guests-btn" onClick={() => updateChildren(-1)}>-</button>
+                  <span className="guests-count">{children}</span>
+                  <button type="button" className="guests-btn" onClick={() => updateChildren(1)}>+</button>
                 </div>
               </div>
             </div>
