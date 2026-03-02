@@ -53,7 +53,7 @@ router.post("/register", async (req: Request, res: Response) => {
     });
   } catch (e) {
     if (e instanceof z.ZodError) {
-      res.status(400).json({ code: "VALIDATION_ERROR", message: e.errors[0].message });
+      res.status(400).json({ code: "VALIDATION_ERROR", message: e.issues[0].message });
       return;
     }
     console.error(e);
@@ -96,7 +96,7 @@ router.post("/login", async (req: Request, res: Response) => {
     });
   } catch (e) {
     if (e instanceof z.ZodError) {
-      res.status(400).json({ code: "VALIDATION_ERROR", message: e.errors[0].message });
+      res.status(400).json({ code: "VALIDATION_ERROR", message: e.issues[0].message });
       return;
     }
     console.error(e);

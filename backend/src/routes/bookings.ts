@@ -186,7 +186,7 @@ router.post("/", authenticate, async (req: Request, res: Response) => {
       return;
     }
     if (e instanceof z.ZodError) {
-      res.status(400).json({ code: "VALIDATION_ERROR", message: e.errors[0].message });
+      res.status(400).json({ code: "VALIDATION_ERROR", message: e.issues[0].message });
       return;
     }
     console.error(e);
@@ -198,7 +198,7 @@ router.post("/", authenticate, async (req: Request, res: Response) => {
 router.get("/:id", authenticate, async (req: Request, res: Response) => {
   try {
     const booking = await prisma.booking.findFirst({
-      where: { id: req.params.id, userId: req.user!.userId },
+      where: { id: req.params.id as string, userId: req.user!.userId },
       include: {
         room: {
           include: {
@@ -226,7 +226,7 @@ router.get("/:id", authenticate, async (req: Request, res: Response) => {
 router.put("/:id/cancel", authenticate, async (req: Request, res: Response) => {
   try {
     const booking = await prisma.booking.findFirst({
-      where: { id: req.params.id, userId: req.user!.userId },
+      where: { id: req.params.id as string, userId: req.user!.userId },
     });
 
     if (!booking) {

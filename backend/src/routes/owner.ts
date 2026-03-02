@@ -188,13 +188,13 @@ router.post("/", async (req: Request, res: Response) => {
 // ================================================================
 router.put("/:id", async (req: Request, res: Response) => {
   try {
-    const ok = await verifyOwnership(req.params.id, req.user!.userId, req.user!.role, res);
+    const ok = await verifyOwnership(req.params.id as string, req.user!.userId, req.user!.role, res);
     if (!ok) return;
 
     const body = accommodationUpdateSchema.parse(req.body);
 
     const accommodation = await prisma.accommodation.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: body,
     });
 
@@ -214,11 +214,11 @@ router.put("/:id", async (req: Request, res: Response) => {
 // ================================================================
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
-    const ok = await verifyOwnership(req.params.id, req.user!.userId, req.user!.role, res);
+    const ok = await verifyOwnership(req.params.id as string, req.user!.userId, req.user!.role, res);
     if (!ok) return;
 
     const accommodation = await prisma.accommodation.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { status: "SUSPENDED" },
     });
 
@@ -234,14 +234,14 @@ router.delete("/:id", async (req: Request, res: Response) => {
 // ================================================================
 router.get("/:id/rooms", async (req: Request, res: Response) => {
   try {
-    const ok = await verifyOwnership(req.params.id, req.user!.userId, req.user!.role, res);
+    const ok = await verifyOwnership(req.params.id as string, req.user!.userId, req.user!.role, res);
     if (!ok) return;
 
     const { page = "1", limit = "20" } = req.query;
     const pageNum = Math.max(1, parseInt(page as string));
     const limitNum = Math.min(100, Math.max(1, parseInt(limit as string)));
 
-    const where = { accommodationId: req.params.id };
+    const where = { accommodationId: req.params.id as string };
 
     const [rooms, total] = await Promise.all([
       prisma.room.findMany({
@@ -271,14 +271,14 @@ router.get("/:id/rooms", async (req: Request, res: Response) => {
 // ================================================================
 router.post("/:id/rooms", async (req: Request, res: Response) => {
   try {
-    const ok = await verifyOwnership(req.params.id, req.user!.userId, req.user!.role, res);
+    const ok = await verifyOwnership(req.params.id as string, req.user!.userId, req.user!.role, res);
     if (!ok) return;
 
     const body = roomCreateSchema.parse(req.body);
 
     const room = await prisma.room.create({
       data: {
-        accommodationId: req.params.id,
+        accommodationId: req.params.id as string,
         name: body.name,
         description: body.description ?? null,
         capacity: body.capacity,
@@ -304,12 +304,12 @@ router.post("/:id/rooms", async (req: Request, res: Response) => {
 // ================================================================
 router.put("/:id/rooms/:roomId", async (req: Request, res: Response) => {
   try {
-    const ok = await verifyOwnership(req.params.id, req.user!.userId, req.user!.role, res);
+    const ok = await verifyOwnership(req.params.id as string, req.user!.userId, req.user!.role, res);
     if (!ok) return;
 
     // 部屋がこの施設に属しているか確認
     const room = await prisma.room.findFirst({
-      where: { id: req.params.roomId, accommodationId: req.params.id },
+      where: { id: req.params.roomId as string, accommodationId: req.params.id as string },
     });
     if (!room) {
       res.status(404).json({ code: "NOT_FOUND", message: "部屋が見つかりません" });
@@ -319,7 +319,7 @@ router.put("/:id/rooms/:roomId", async (req: Request, res: Response) => {
     const body = roomUpdateSchema.parse(req.body);
 
     const updated = await prisma.room.update({
-      where: { id: req.params.roomId },
+      where: { id: req.params.roomId as string },
       data: body,
     });
 
@@ -339,7 +339,7 @@ router.put("/:id/rooms/:roomId", async (req: Request, res: Response) => {
 // ================================================================
 router.get("/:id/bookings", async (req: Request, res: Response) => {
   try {
-    const ok = await verifyOwnership(req.params.id, req.user!.userId, req.user!.role, res);
+    const ok = await verifyOwnership(req.params.id as string, req.user!.userId, req.user!.role, res);
     if (!ok) return;
 
     const { status, page = "1", limit = "20" } = req.query;
@@ -347,7 +347,7 @@ router.get("/:id/bookings", async (req: Request, res: Response) => {
     const limitNum = Math.min(100, Math.max(1, parseInt(limit as string)));
 
     const where: any = {
-      room: { accommodationId: req.params.id },
+      room: { accommodationId: req.params.id as string },
     };
     if (status) where.status = status;
 

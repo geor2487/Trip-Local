@@ -61,7 +61,7 @@ router.get("/", async (req: Request, res: Response) => {
 router.get("/:id", async (req: Request, res: Response) => {
   try {
     const accommodation = await prisma.accommodation.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: {
         rooms: { where: { isActive: true } },
         owner: { select: { name: true, avatarUrl: true } },
@@ -95,7 +95,7 @@ router.get("/:id/availability", async (req: Request, res: Response) => {
     const endDate = new Date(y, m, 0);
 
     const accommodation = await prisma.accommodation.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: { rooms: { where: { isActive: true }, select: { id: true } } },
     });
 

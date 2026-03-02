@@ -163,7 +163,7 @@ router.get("/my/registrations", authenticate, async (req: Request, res: Response
 router.get("/:id", async (req: Request, res: Response) => {
   try {
     const event: any = await prisma.event.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: {
         organizer: { select: { name: true, avatarUrl: true } },
         _count: { select: { registrations: { where: { status: { not: "CANCELLED" } } } } },
@@ -195,7 +195,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 router.post("/:id/register", authenticate, async (req: Request, res: Response) => {
   try {
     const event: any = await prisma.event.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: {
         _count: { select: { registrations: { where: { status: { not: "CANCELLED" } } } } },
       },
@@ -309,7 +309,7 @@ router.post("/:id/register", authenticate, async (req: Request, res: Response) =
 router.put("/:id/cancel-registration", authenticate, async (req: Request, res: Response) => {
   try {
     const registration: any = await prisma.eventRegistration.findUnique({
-      where: { eventId_userId: { eventId: req.params.id, userId: req.user!.userId } },
+      where: { eventId_userId: { eventId: req.params.id as string, userId: req.user!.userId } },
       include: { event: true, payment: true },
     });
 
@@ -400,7 +400,7 @@ router.put("/:id", authenticate, requireRole("ORGANIZER", "ADMIN"), async (req: 
   try {
     const body = updateEventSchema.parse(req.body);
 
-    const event = await prisma.event.findUnique({ where: { id: req.params.id } });
+    const event = await prisma.event.findUnique({ where: { id: req.params.id as string } });
     if (!event) {
       res.status(404).json({ code: "NOT_FOUND", message: "イベントが見つかりません" });
       return;
@@ -413,7 +413,7 @@ router.put("/:id", authenticate, requireRole("ORGANIZER", "ADMIN"), async (req: 
     }
 
     const updated = await prisma.event.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: {
         ...(body.title !== undefined && { title: body.title }),
         ...(body.description !== undefined && { description: body.description }),
@@ -445,7 +445,7 @@ router.put("/:id", authenticate, requireRole("ORGANIZER", "ADMIN"), async (req: 
 // PUT /api/events/:id/publish — イベント公開（DRAFT → PUBLISHED）
 router.put("/:id/publish", authenticate, requireRole("ORGANIZER", "ADMIN"), async (req: Request, res: Response) => {
   try {
-    const event = await prisma.event.findUnique({ where: { id: req.params.id } });
+    const event = await prisma.event.findUnique({ where: { id: req.params.id as string } });
     if (!event) {
       res.status(404).json({ code: "NOT_FOUND", message: "イベントが見つかりません" });
       return;
@@ -462,7 +462,7 @@ router.put("/:id/publish", authenticate, requireRole("ORGANIZER", "ADMIN"), asyn
     }
 
     const updated = await prisma.event.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { status: "PUBLISHED" },
     });
 
@@ -476,7 +476,7 @@ router.put("/:id/publish", authenticate, requireRole("ORGANIZER", "ADMIN"), asyn
 // PUT /api/events/:id/cancel — イベントキャンセル
 router.put("/:id/cancel", authenticate, requireRole("ORGANIZER", "ADMIN"), async (req: Request, res: Response) => {
   try {
-    const event = await prisma.event.findUnique({ where: { id: req.params.id } });
+    const event = await prisma.event.findUnique({ where: { id: req.params.id as string } });
     if (!event) {
       res.status(404).json({ code: "NOT_FOUND", message: "イベントが見つかりません" });
       return;
@@ -495,7 +495,7 @@ router.put("/:id/cancel", authenticate, requireRole("ORGANIZER", "ADMIN"), async
     // トランザクション内でイベントキャンセル + 全登録者の返金処理
     const updated = await prisma.$transaction(async (tx) => {
       const updatedEvent = await tx.event.update({
-        where: { id: req.params.id },
+        where: { id: req.params.id as string },
         data: { status: "CANCELLED" },
       });
 
@@ -551,7 +551,7 @@ router.get("/:id/participants", authenticate, requireRole("ORGANIZER", "ADMIN"),
     const pageNum = Math.max(1, parseInt(page as string));
     const limitNum = Math.min(100, Math.max(1, parseInt(limit as string)));
 
-    const event = await prisma.event.findUnique({ where: { id: req.params.id } });
+    const event = await prisma.event.findUnique({ where: { id: req.params.id as string } });
     if (!event) {
       res.status(404).json({ code: "NOT_FOUND", message: "イベントが見つかりません" });
       return;

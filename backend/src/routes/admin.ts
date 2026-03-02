@@ -134,14 +134,14 @@ router.put("/users/:id/role", async (req: Request, res: Response) => {
   try {
     const body = updateRoleSchema.parse(req.body);
 
-    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    const user = await prisma.user.findUnique({ where: { id: req.params.id as string } });
     if (!user) {
       res.status(404).json({ code: "NOT_FOUND", message: "ユーザーが見つかりません" });
       return;
     }
 
     const updated = await prisma.user.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { role: body.role },
       select: {
         id: true,
@@ -169,7 +169,7 @@ router.put("/users/:id/role", async (req: Request, res: Response) => {
 // ================================================================
 router.put("/users/:id/deactivate", async (req: Request, res: Response) => {
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    const user = await prisma.user.findUnique({ where: { id: req.params.id as string } });
     if (!user) {
       res.status(404).json({ code: "NOT_FOUND", message: "ユーザーが見つかりません" });
       return;
@@ -181,7 +181,7 @@ router.put("/users/:id/deactivate", async (req: Request, res: Response) => {
     }
 
     const updated = await prisma.user.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { isActive: false },
       select: {
         id: true,
@@ -247,14 +247,14 @@ router.put("/accommodations/:id/status", async (req: Request, res: Response) => 
   try {
     const body = updateAccommodationStatusSchema.parse(req.body);
 
-    const accommodation = await prisma.accommodation.findUnique({ where: { id: req.params.id } });
+    const accommodation = await prisma.accommodation.findUnique({ where: { id: req.params.id as string } });
     if (!accommodation) {
       res.status(404).json({ code: "NOT_FOUND", message: "施設が見つかりません" });
       return;
     }
 
     const updated = await prisma.accommodation.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { status: body.status },
       include: {
         owner: { select: { id: true, name: true, email: true } },
@@ -319,14 +319,14 @@ router.put("/events/:id/status", async (req: Request, res: Response) => {
   try {
     const body = updateEventStatusSchema.parse(req.body);
 
-    const event = await prisma.event.findUnique({ where: { id: req.params.id } });
+    const event = await prisma.event.findUnique({ where: { id: req.params.id as string } });
     if (!event) {
       res.status(404).json({ code: "NOT_FOUND", message: "イベントが見つかりません" });
       return;
     }
 
     const updated = await prisma.event.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { status: body.status },
       include: {
         organizer: { select: { id: true, name: true, email: true } },
