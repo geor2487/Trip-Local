@@ -2,9 +2,12 @@ import { Router, Request, Response } from "express";
 import bcryptjs from "bcryptjs";
 import crypto from "crypto";
 import { z } from "zod";
+import { OAuth2Client } from "google-auth-library";
 import { prisma } from "../lib/prisma.js";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../lib/jwt.js";
 import { authenticate } from "../middleware/auth.js";
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const router = Router();
 
@@ -139,6 +142,75 @@ router.post("/refresh", async (req: Request, res: Response) => {
     res.json({ accessToken, refreshToken: newRefreshToken, expiresIn: 900 });
   } catch {
     res.status(401).json({ code: "INVALID_TOKEN", message: "トークンが無効です" });
+  }
+});
+
+// POST /api/auth/google
+router.post("/google", async (req: Request, res: Response) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      res.status(400).json({ code: "MISSING_CREDENTIAL", message: "Google credential is required" });
+      return;
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+      res.status(401).json({ code: "INVALID_TOKEN", message: "Invalid Google token" });
+      return;
+    }
+
+    const { sub: googleId, email, name, picture } = payload;
+
+    // Find existing user by googleId or email
+    let user = await prisma.user.findFirst({
+      where: { OR: [{ googleId }, { email }] },
+    });
+
+    if (user) {
+      // Link Google account if not already linked
+      if (!user.googleId) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { googleId, avatarUrl: user.avatarUrl || picture },
+        });
+      }
+    } else {
+      // Create new user
+      user = await prisma.user.create({
+        data: {
+          email,
+          name: name || email.split("@")[0],
+          googleId,
+          avatarUrl: picture,
+        },
+      });
+    }
+
+    const accessToken = signAccessToken({ userId: user.id, role: user.role });
+    const refreshToken = signRefreshToken({ userId: user.id, role: user.role });
+
+    await prisma.refreshToken.create({
+      data: {
+        token: crypto.createHash("sha256").update(refreshToken).digest("hex"),
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    res.json({
+      accessToken,
+      refreshToken,
+      expiresIn: 900,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+    });
+  } catch (e) {
+    console.error("Google auth error:", e);
+    res.status(401).json({ code: "GOOGLE_AUTH_FAILED", message: "Google認証に失敗しました" });
   }
 });
 

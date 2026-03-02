@@ -1,7 +1,22 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../lib/auth-context';
 import '../styles/auth.css';
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: Record<string, unknown>) => void;
+          renderButton: (element: HTMLElement, config: Record<string, unknown>) => void;
+        };
+      };
+    };
+  }
+}
+
+const GOOGLE_CLIENT_ID = '1065554017617-qd5ln80ohjf3bhfafa5os9hrgi0raas3.apps.googleusercontent.com';
 
 interface AuthPageProps {
   mode: 'login' | 'register';
@@ -9,15 +24,52 @@ interface AuthPageProps {
 }
 
 export function AuthPage({ mode, onNavigate }: AuthPageProps) {
-  const { login, register } = useAuth();
-  const { t } = useTranslation();
+  const { login, register, googleLogin } = useAuth();
+  const { t, i18n } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const googleBtnRef = useRef<HTMLDivElement>(null);
 
   const isLogin = mode === 'login';
+
+  const handleGoogleResponse = useCallback(async (response: { credential: string }) => {
+    setError('');
+    setLoading(true);
+    try {
+      await googleLogin(response.credential);
+      onNavigate('home');
+    } catch (err: any) {
+      setError(err.message || t('auth.defaultError'));
+    } finally {
+      setLoading(false);
+    }
+  }, [googleLogin, onNavigate, t]);
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.onload = () => {
+      if (window.google && googleBtnRef.current) {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleGoogleResponse,
+        });
+        window.google.accounts.id.renderButton(googleBtnRef.current, {
+          theme: 'outline',
+          size: 'large',
+          width: '100%',
+          text: isLogin ? 'signin_with' : 'signup_with',
+          locale: i18n.language,
+        });
+      }
+    };
+    document.head.appendChild(script);
+    return () => { script.remove(); };
+  }, [handleGoogleResponse, isLogin, i18n.language]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -69,6 +121,12 @@ export function AuthPage({ mode, onNavigate }: AuthPageProps) {
           </p>
 
           {error && <div className="auth-error">{error}</div>}
+
+          <div ref={googleBtnRef} className="auth-google-btn" />
+
+          <div className="auth-divider">
+            <span>{t('auth.orDivider')}</span>
+          </div>
 
           <form onSubmit={handleSubmit} className="auth-form">
             {!isLogin && (

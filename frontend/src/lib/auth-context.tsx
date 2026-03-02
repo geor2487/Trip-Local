@@ -13,6 +13,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
+  googleLogin: (credential: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -52,13 +53,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(res.user);
   };
 
+  const googleLogin = async (credential: string) => {
+    const res = await authApi.google(credential);
+    localStorage.setItem('triplocal_auth', JSON.stringify({
+      accessToken: res.accessToken,
+      refreshToken: res.refreshToken,
+    }));
+    setUser(res.user);
+  };
+
   const logout = () => {
     clearAuth();
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, googleLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );

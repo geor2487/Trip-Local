@@ -86,6 +86,8 @@ export const authApi = {
     apiFetch('/auth/register', { method: 'POST', body: JSON.stringify(data), skipAuth: true }),
   login: (data: { email: string; password: string }) =>
     apiFetch('/auth/login', { method: 'POST', body: JSON.stringify(data), skipAuth: true }),
+  google: (credential: string) =>
+    apiFetch('/auth/google', { method: 'POST', body: JSON.stringify({ credential }), skipAuth: true }),
   me: () => apiFetch('/auth/me'),
 };
 
