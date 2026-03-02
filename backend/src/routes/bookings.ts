@@ -84,6 +84,36 @@ router.post("/", authenticate, async (req: Request, res: Response) => {
       if (!room || !room.isActive) throw new Error("ROOM_NOT_FOUND");
       if (body.guests > room.capacity) throw new Error("CAPACITY_EXCEEDED");
 
+      // 30分以上経過した PENDING 予約を自動キャンセル（ゴースト予約クリーンアップ）
+      const staleThreshold = new Date(Date.now() - 30 * 60 * 1000);
+      const staleBookings = await tx.booking.findMany({
+        where: {
+          roomId: body.roomId,
+          status: "PENDING",
+          createdAt: { lt: staleThreshold },
+          checkIn: { lt: checkOut },
+          checkOut: { gt: checkIn },
+        },
+      });
+
+      for (const stale of staleBookings) {
+        await tx.booking.update({
+          where: { id: stale.id },
+          data: { status: "CANCELLED" },
+        });
+        // Availability のブロックも解除
+        const staleDates: Date[] = [];
+        for (let d = new Date(stale.checkIn); d < stale.checkOut; d.setDate(d.getDate() + 1)) {
+          staleDates.push(new Date(d));
+        }
+        for (const date of staleDates) {
+          await tx.availability.updateMany({
+            where: { roomId: body.roomId, date },
+            data: { isBlocked: false },
+          });
+        }
+      }
+
       // 空き状況チェック（実際のアクティブ予約で判定）
       const overlapping = await tx.booking.count({
         where: {
