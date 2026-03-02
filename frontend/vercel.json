@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://<render-url>/api/$1" },
+    { "source": "/api/(.*)", "destination": "https://trip-local.onrender.com/api/$1" },
     { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ]
 }
