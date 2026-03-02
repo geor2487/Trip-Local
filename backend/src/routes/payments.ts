@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import Stripe from "stripe";
 import { prisma } from "../lib/prisma.js";
+import { sendBookingConfirmationEmail } from "../lib/email.js";
 
 const router = Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2025-02-24.acacia" as any });
@@ -35,6 +36,32 @@ router.post("/webhook", async (req: Request, res: Response) => {
           });
         });
         console.log(`Booking ${bookingId} confirmed via webhook`);
+
+        // 予約確認メール送信
+        const booking = await prisma.booking.findUnique({
+          where: { id: bookingId },
+          include: {
+            user: { select: { email: true, name: true } },
+            room: {
+              include: {
+                accommodation: { select: { name: true } },
+              },
+            },
+          },
+        });
+        if (booking) {
+          await sendBookingConfirmationEmail({
+            to: booking.user.email,
+            guestName: booking.user.name,
+            accommodationName: booking.room.accommodation.name,
+            roomName: booking.room.name,
+            checkIn: booking.checkIn.toISOString(),
+            checkOut: booking.checkOut.toISOString(),
+            guests: booking.guests,
+            totalPrice: booking.totalPrice,
+            bookingId: booking.id,
+          });
+        }
       }
       break;
     }

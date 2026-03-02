@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import { prisma } from "../lib/prisma.js";
 import { authenticate } from "../middleware/auth.js";
 import { calculateRefundAmount, calculateRefundRate } from "../lib/cancellation.js";
+import { sendCancellationEmail } from "../lib/email.js";
 
 const router = Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2025-02-24.acacia" as any });
@@ -281,6 +282,33 @@ router.put("/:id/cancel", authenticate, async (req: Request, res: Response) => {
 
       return updatedBooking;
     });
+
+    // キャンセル確認メール送信
+    const bookingWithDetails = await prisma.booking.findUnique({
+      where: { id: booking.id },
+      include: {
+        user: { select: { email: true, name: true } },
+        room: {
+          include: {
+            accommodation: { select: { name: true } },
+          },
+        },
+      },
+    });
+    if (bookingWithDetails) {
+      await sendCancellationEmail({
+        to: bookingWithDetails.user.email,
+        guestName: bookingWithDetails.user.name,
+        accommodationName: bookingWithDetails.room.accommodation.name,
+        roomName: bookingWithDetails.room.name,
+        checkIn: bookingWithDetails.checkIn.toISOString(),
+        checkOut: bookingWithDetails.checkOut.toISOString(),
+        totalPrice: bookingWithDetails.totalPrice,
+        refundAmount,
+        refundRate,
+        bookingId: bookingWithDetails.id,
+      });
+    }
 
     res.json({
       ...updated,
