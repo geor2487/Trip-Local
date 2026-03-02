@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { eventApi } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { tEventTitle, tEventDesc, tEventLocation, tPrefecture, tCity, tName } from '../lib/content-i18n';
 import '../styles/events.css';
 
 interface EventDetailPageProps {
@@ -35,19 +37,23 @@ interface Registration {
   status: string;
 }
 
-function formatFullDate(dateStr: string): string {
+function formatFullDate(dateStr: string, lang: string): string {
   const d = new Date(dateStr);
-  const dow = ['日', '月', '火', '水', '木', '金', '土'][d.getDay()];
-  const year = d.getFullYear();
-  const month = d.getMonth() + 1;
-  const day = d.getDate();
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  return `${year}年${month}月${day}日（${dow}）${hours}:${minutes}`;
+  if (lang === 'ja') {
+    const dow = ['日', '月', '火', '水', '木', '金', '土'][d.getDay()];
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${year}年${month}月${day}日（${dow}）${hours}:${minutes}`;
+  }
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
 export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -92,7 +98,7 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
       }
     },
     onError: (err: Error) => {
-      setRegistrationError(err.message || '申し込みに失敗しました');
+      setRegistrationError(err.message || t('events.registrationError'));
     },
   });
 
@@ -113,7 +119,7 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
   if (isLoading) {
     return (
       <div style={{ padding: '120px 40px', textAlign: 'center', color: 'var(--warm-gray)' }}>
-        読み込み中...
+        {t('common.loading')}
       </div>
     );
   }
@@ -122,7 +128,7 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
   if (!event) {
     return (
       <div style={{ padding: '120px 40px', textAlign: 'center', color: 'var(--warm-gray)' }}>
-        イベントが見つかりません
+        {t('events.notFound')}
       </div>
     );
   }
@@ -144,26 +150,26 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2>申し込みが完了しました</h2>
-        <p>以下のチケットコードを当日ご提示ください。</p>
+        <h2>{t('events.registrationComplete')}</h2>
+        <p>{t('events.showTicketCode')}</p>
         <div className="event-success-ticket">
-          <div className="event-ticket-label">チケットコード</div>
+          <div className="event-ticket-label">{t('events.ticketCode')}</div>
           <div className="event-ticket-value">{ticketCode}</div>
         </div>
-        <p>{event.title}</p>
-        <p style={{ color: 'var(--ink)' }}>{formatFullDate(event.date)}</p>
+        <p>{tEventTitle(event.title, i18n.language)}</p>
+        <p style={{ color: 'var(--ink)' }}>{formatFullDate(event.date, i18n.language)}</p>
         <div className="event-success-actions">
           <button
             className="event-success-btn-primary"
             onClick={() => onNavigate('events')}
           >
-            イベント一覧に戻る
+            {t('events.backToList')}
           </button>
           <button
             className="event-success-btn-outline"
             onClick={() => onNavigate('home')}
           >
-            トップに戻る
+            {t('events.backToHome')}
           </button>
         </div>
       </div>
@@ -182,9 +188,9 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
         {/* LEFT COLUMN */}
         <div>
           {event.category && (
-            <span className="event-detail-category">{event.category}</span>
+            <span className="event-detail-category">{t(`events.categories.${event.category}`) || event.category}</span>
           )}
-          <h1 className="event-detail-title">{event.title}</h1>
+          <h1 className="event-detail-title">{tEventTitle(event.title, i18n.language)}</h1>
 
           {/* META INFO */}
           <div className="event-detail-meta">
@@ -197,11 +203,11 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
                 <line x1="3" y1="10" x2="21" y2="10" />
               </svg>
               <div>
-                <div className="event-meta-label">日時</div>
-                <div>{formatFullDate(event.date)}</div>
+                <div className="event-meta-label">{t('events.dateTime')}</div>
+                <div>{formatFullDate(event.date, i18n.language)}</div>
                 {event.endDate && (
                   <div style={{ fontSize: 13, color: 'var(--warm-gray)', marginTop: 2 }}>
-                    〜 {formatFullDate(event.endDate)}
+                    {i18n.language === 'ja' ? '〜' : '–'} {formatFullDate(event.endDate, i18n.language)}
                   </div>
                 )}
               </div>
@@ -214,10 +220,10 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
                 <circle cx="12" cy="10" r="3" />
               </svg>
               <div>
-                <div className="event-meta-label">場所</div>
-                <div>{event.location}</div>
+                <div className="event-meta-label">{t('events.location')}</div>
+                <div>{tEventLocation(event.location, i18n.language)}</div>
                 <div style={{ fontSize: 13, color: 'var(--warm-gray)', marginTop: 2 }}>
-                  {event.prefecture} {event.city}
+                  {tPrefecture(event.prefecture, i18n.language)} {tCity(event.city, i18n.language)}
                 </div>
               </div>
             </div>
@@ -229,8 +235,8 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
               <div>
-                <div className="event-meta-label">参加費</div>
-                <div>{isFree ? '無料' : `¥${event.price.toLocaleString()}`}</div>
+                <div className="event-meta-label">{t('events.fee')}</div>
+                <div>{isFree ? t('events.free') : `¥${event.price.toLocaleString()}`}</div>
               </div>
             </div>
           </div>
@@ -242,11 +248,11 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
             <>
               <div className="event-organizer">
                 <div className="event-organizer-avatar">
-                  {event.organizer.name.charAt(0)}
+                  {tName(event.organizer.name, i18n.language).charAt(0)}
                 </div>
                 <div>
-                  <div className="event-organizer-name">{event.organizer.name}</div>
-                  <div className="event-organizer-role">主催者</div>
+                  <div className="event-organizer-name">{tName(event.organizer.name, i18n.language)}</div>
+                  <div className="event-organizer-role">{t('events.organizer')}</div>
                 </div>
               </div>
               <hr className="event-detail-divider" />
@@ -254,7 +260,7 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
           )}
 
           {/* DESCRIPTION */}
-          <p className="event-detail-desc">{event.description}</p>
+          <p className="event-detail-desc">{tEventDesc(event.description, i18n.language)}</p>
         </div>
 
         {/* RIGHT COLUMN — BOOKING SIDEBAR */}
@@ -262,22 +268,22 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
           <div className="event-booking-card">
             {/* PRICE */}
             {isFree ? (
-              <div className="event-booking-price free">無料</div>
+              <div className="event-booking-price free">{t('events.free')}</div>
             ) : (
               <div className="event-booking-price">¥{event.price.toLocaleString()}</div>
             )}
             <div className="event-booking-price-label">
-              {isFree ? '参加費無料のイベントです' : '1名あたりの参加費'}
+              {isFree ? t('events.freeEvent') : t('events.pricePerPerson')}
             </div>
 
             {/* CAPACITY BAR */}
             <div className="capacity-section">
               <div className="capacity-label">
                 <span className="capacity-label-remaining">
-                  残り {Math.max(0, remaining)} / {event.capacity} 席
+                  {t('events.remainingCapacity', { remaining: Math.max(0, remaining), capacity: event.capacity })}
                 </span>
                 {isSoldOut && (
-                  <span style={{ fontSize: 12, color: 'var(--warm-gray)' }}>満席</span>
+                  <span style={{ fontSize: 12, color: 'var(--warm-gray)' }}>{t('events.full')}</span>
                 )}
               </div>
               <div className="capacity-bar">
@@ -292,19 +298,19 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
             {isRegistered ? (
               <>
                 <button className="event-register-btn registered" disabled>
-                  申込み済み
+                  {t('events.registered')}
                 </button>
                 <div className="event-register-status">
-                  このイベントに申込み済みです
+                  {t('events.alreadyRegistered')}
                 </div>
               </>
             ) : isSoldOut ? (
               <>
                 <button className="event-register-btn" disabled>
-                  満席
+                  {t('events.full')}
                 </button>
                 <p className="event-register-note">
-                  現在キャンセル待ちは受け付けていません
+                  {t('events.noWaitlist')}
                 </p>
               </>
             ) : (
@@ -313,10 +319,10 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
                   className="event-register-btn"
                   onClick={handleRegisterClick}
                 >
-                  {!user ? 'ログインして申し込む' : '参加申し込み'}
+                  {!user ? t('events.loginToRegister') : t('events.register')}
                 </button>
                 <p className="event-register-note">
-                  {isFree ? '無料イベント — 決済は不要です' : '申込み後に決済画面へ進みます'}
+                  {isFree ? t('events.freeNote') : t('events.paidNote')}
                 </p>
               </>
             )}
@@ -339,31 +345,31 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
               ×
             </button>
 
-            <h2>参加申し込みの確認</h2>
-            <p>以下のイベントに申し込みます。</p>
+            <h2>{t('events.confirmTitle')}</h2>
+            <p>{t('events.confirmDesc')}</p>
 
             <div className="event-modal-summary">
               <div className="event-modal-summary-row">
-                <span className="label">イベント</span>
-                <span>{event.title}</span>
+                <span className="label">{t('events.eventLabel')}</span>
+                <span>{tEventTitle(event.title, i18n.language)}</span>
               </div>
               <div className="event-modal-summary-row">
-                <span className="label">日時</span>
-                <span>{formatFullDate(event.date)}</span>
+                <span className="label">{t('events.dateTime')}</span>
+                <span>{formatFullDate(event.date, i18n.language)}</span>
               </div>
               <div className="event-modal-summary-row">
-                <span className="label">場所</span>
-                <span>{event.location}</span>
+                <span className="label">{t('events.location')}</span>
+                <span>{tEventLocation(event.location, i18n.language)}</span>
               </div>
               <div className="event-modal-summary-row total">
-                <span>参加費</span>
-                <span>{isFree ? '無料' : `¥${event.price.toLocaleString()}`}</span>
+                <span>{t('events.fee')}</span>
+                <span>{isFree ? t('events.free') : `¥${event.price.toLocaleString()}`}</span>
               </div>
             </div>
 
             {!isFree && (
               <p style={{ fontSize: 12, color: 'var(--warm-gray)' }}>
-                ※ 確認後、決済画面へ進みます（Stripe）
+                {t('events.stripeNote')}
               </p>
             )}
 
@@ -376,7 +382,7 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
                 className="event-modal-cancel"
                 onClick={() => setShowConfirmModal(false)}
               >
-                キャンセル
+                {t('common.cancel')}
               </button>
               <button
                 className="event-modal-confirm"
@@ -384,10 +390,10 @@ export function EventDetailPage({ id, onNavigate }: EventDetailPageProps) {
                 disabled={registerMutation.isPending}
               >
                 {registerMutation.isPending
-                  ? '処理中...'
+                  ? t('common.processing')
                   : isFree
-                    ? '申し込みを確定'
-                    : '決済に進む'}
+                    ? t('events.confirmFree')
+                    : t('events.proceedPayment')}
               </button>
             </div>
           </div>

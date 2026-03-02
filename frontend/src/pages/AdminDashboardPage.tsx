@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { adminApi } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { tPrefecture, tCity, tName, tEventTitle } from '../lib/content-i18n';
 import '../styles/admin.css';
 
 // ---------- Types ----------
@@ -68,11 +70,11 @@ interface Booking {
 
 type TabKey = 'users' | 'accommodations' | 'events' | 'bookings';
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: 'users', label: 'ユーザー管理' },
-  { key: 'accommodations', label: '施設管理' },
-  { key: 'events', label: 'イベント管理' },
-  { key: 'bookings', label: '予約一覧' },
+const TAB_KEYS: { key: TabKey; labelKey: string }[] = [
+  { key: 'users', labelKey: 'admin.tabs.users' },
+  { key: 'accommodations', labelKey: 'admin.tabs.accommodations' },
+  { key: 'events', labelKey: 'admin.tabs.events' },
+  { key: 'bookings', labelKey: 'admin.tabs.bookings' },
 ];
 
 const ROLE_OPTIONS = ['USER', 'OWNER', 'ORGANIZER', 'ADMIN'];
@@ -84,49 +86,32 @@ const ACCOMMODATION_STATUS_OPTIONS = [
   'REJECTED',
 ];
 
-const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+const STATUS_BADGE_CLS: Record<string, string> = {
   // Green
-  PUBLISHED:  { label: '公開中', cls: 'badge-green' },
-  CONFIRMED:  { label: '確定', cls: 'badge-green' },
-  SUCCEEDED:  { label: '成功', cls: 'badge-green' },
-  ACTIVE:     { label: '有効', cls: 'badge-green' },
+  PUBLISHED:  'badge-green',
+  CONFIRMED:  'badge-green',
+  SUCCEEDED:  'badge-green',
+  ACTIVE:     'badge-green',
   // Amber
-  PENDING:         { label: '保留中', cls: 'badge-amber' },
-  PENDING_REVIEW:  { label: '審査待ち', cls: 'badge-amber' },
-  DRAFT:           { label: '下書き', cls: 'badge-amber' },
+  PENDING:         'badge-amber',
+  PENDING_REVIEW:  'badge-amber',
+  DRAFT:           'badge-amber',
   // Red
-  CANCELLED:  { label: 'キャンセル', cls: 'badge-red' },
-  SUSPENDED:  { label: '停止中', cls: 'badge-red' },
-  FAILED:     { label: '失敗', cls: 'badge-red' },
-  REJECTED:   { label: '却下', cls: 'badge-red' },
+  CANCELLED:  'badge-red',
+  SUSPENDED:  'badge-red',
+  FAILED:     'badge-red',
+  REJECTED:   'badge-red',
   // Gray / Blue
-  COMPLETED:  { label: '完了', cls: 'badge-blue' },
-  REFUNDED:   { label: '返金済', cls: 'badge-gray' },
-};
-
-const ROLE_LABELS: Record<string, string> = {
-  USER: 'ユーザー',
-  OWNER: 'オーナー',
-  ORGANIZER: '主催者',
-  ADMIN: '管理者',
+  COMPLETED:  'badge-blue',
+  REFUNDED:   'badge-gray',
 };
 
 const PAGE_SIZE = 10;
 
 // ---------- Helpers ----------
 
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
-}
-
 function formatCurrency(n: number) {
   return `¥${n.toLocaleString()}`;
-}
-
-function statusBadge(status: string) {
-  const info = STATUS_BADGE[status] || { label: status, cls: 'badge-gray' };
-  return <span className={`admin-badge ${info.cls}`}>{info.label}</span>;
 }
 
 // ---------- Sub-components ----------
@@ -138,6 +123,8 @@ function PaginationBar({
   pagination: Pagination | undefined;
   onPageChange: (page: number) => void;
 }) {
+  const { t } = useTranslation();
+
   if (!pagination || pagination.totalPages <= 1) return null;
 
   const { page, totalPages, total, limit } = pagination;
@@ -156,7 +143,7 @@ function PaginationBar({
   return (
     <div className="admin-pagination">
       <span className="admin-pagination-info">
-        {total}件中 {start}-{end}件を表示
+        {t('admin.pagination.showing', { total, start, end })}
       </span>
       <div className="admin-pagination-btns">
         <button
@@ -164,7 +151,7 @@ function PaginationBar({
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
         >
-          前へ
+          {t('admin.pagination.previous')}
         </button>
         {pages.map((p) => (
           <button
@@ -180,7 +167,7 @@ function PaginationBar({
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
         >
-          次へ
+          {t('admin.pagination.next')}
         </button>
       </div>
     </div>
@@ -190,9 +177,25 @@ function PaginationBar({
 // ---------- Users Tab ----------
 
 function UsersTab() {
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [confirmTarget, setConfirmTarget] = useState<User | null>(null);
+
+  function formatDate(dateStr: string) {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(i18n.language, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  }
+
+  function statusBadge(status: string) {
+    const cls = STATUS_BADGE_CLS[status] || 'badge-gray';
+    const label = t(`admin.statuses.${status}`, { defaultValue: status });
+    return <span className={`admin-badge ${cls}`}>{label}</span>;
+  }
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'users', page],
@@ -217,8 +220,8 @@ function UsersTab() {
     },
   });
 
-  if (isLoading) return <div className="admin-loading">読み込み中...</div>;
-  if (error) return <div className="admin-error">ユーザー情報の取得に失敗しました</div>;
+  if (isLoading) return <div className="admin-loading">{t('common.loading')}</div>;
+  if (error) return <div className="admin-error">{t('admin.users.fetchError')}</div>;
 
   const users: User[] = data?.data ?? [];
   const pagination: Pagination | undefined = data?.pagination;
@@ -226,23 +229,23 @@ function UsersTab() {
   return (
     <>
       {users.length === 0 ? (
-        <div className="admin-empty">ユーザーが見つかりません</div>
+        <div className="admin-empty">{t('admin.users.notFound')}</div>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
-                <th>ユーザー名</th>
-                <th>メール</th>
-                <th>ロール</th>
-                <th>ステータス</th>
-                <th>操作</th>
+                <th>{t('admin.users.name')}</th>
+                <th>{t('admin.users.email')}</th>
+                <th>{t('admin.users.role')}</th>
+                <th>{t('admin.users.status')}</th>
+                <th>{t('admin.users.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {users.map((u) => (
                 <tr key={u.id}>
-                  <td>{u.name}</td>
+                  <td>{tName(u.name, i18n.language)}</td>
                   <td className="cell-email">{u.email}</td>
                   <td>
                     <select
@@ -255,7 +258,7 @@ function UsersTab() {
                     >
                       {ROLE_OPTIONS.map((r) => (
                         <option key={r} value={r}>
-                          {ROLE_LABELS[r] || r}
+                          {t(`admin.roles.${r}`, { defaultValue: r })}
                         </option>
                       ))}
                     </select>
@@ -265,7 +268,7 @@ function UsersTab() {
                     <span
                       className={`active-dot ${u.isActive ? 'is-active' : 'is-inactive'}`}
                     />
-                    {u.isActive ? '有効' : '無効'}
+                    {u.isActive ? t('admin.users.active') : t('admin.users.inactive')}
                   </td>
                   <td>
                     {u.isActive && (
@@ -274,7 +277,7 @@ function UsersTab() {
                         onClick={() => setConfirmTarget(u)}
                         disabled={deactivateMutation.isPending}
                       >
-                        無効化
+                        {t('admin.users.deactivate')}
                       </button>
                     )}
                   </td>
@@ -292,24 +295,23 @@ function UsersTab() {
           onClick={() => setConfirmTarget(null)}
         >
           <div className="admin-confirm" onClick={(e) => e.stopPropagation()}>
-            <h3>ユーザーの無効化</h3>
+            <h3>{t('admin.users.deactivateTitle')}</h3>
             <p>
-              「{confirmTarget.name}」({confirmTarget.email})
-              を無効化しますか？このユーザーはログインできなくなります。
+              {t('admin.users.deactivateConfirm', { name: tName(confirmTarget.name, i18n.language), email: confirmTarget.email })}
             </p>
             <div className="admin-confirm-actions">
               <button
                 className="confirm-cancel"
                 onClick={() => setConfirmTarget(null)}
               >
-                キャンセル
+                {t('common.cancel')}
               </button>
               <button
                 className="confirm-action"
                 disabled={deactivateMutation.isPending}
                 onClick={() => deactivateMutation.mutate(confirmTarget.id)}
               >
-                {deactivateMutation.isPending ? '処理中...' : '無効化する'}
+                {deactivateMutation.isPending ? t('admin.users.processing') : t('admin.users.deactivateAction')}
               </button>
             </div>
           </div>
@@ -322,8 +324,15 @@ function UsersTab() {
 // ---------- Accommodations Tab ----------
 
 function AccommodationsTab() {
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+
+  function statusBadge(status: string) {
+    const cls = STATUS_BADGE_CLS[status] || 'badge-gray';
+    const label = t(`admin.statuses.${status}`, { defaultValue: status });
+    return <span className={`admin-badge ${cls}`}>{label}</span>;
+  }
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'accommodations', page],
@@ -343,8 +352,8 @@ function AccommodationsTab() {
     },
   });
 
-  if (isLoading) return <div className="admin-loading">読み込み中...</div>;
-  if (error) return <div className="admin-error">施設情報の取得に失敗しました</div>;
+  if (isLoading) return <div className="admin-loading">{t('common.loading')}</div>;
+  if (error) return <div className="admin-error">{t('admin.accommodations.fetchError')}</div>;
 
   const accommodations: Accommodation[] = data?.data ?? [];
   const pagination: Pagination | undefined = data?.pagination;
@@ -352,23 +361,23 @@ function AccommodationsTab() {
   return (
     <>
       {accommodations.length === 0 ? (
-        <div className="admin-empty">施設が見つかりません</div>
+        <div className="admin-empty">{t('admin.accommodations.notFound')}</div>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
-                <th>施設名</th>
-                <th>オーナー</th>
-                <th>ステータス</th>
-                <th>地域</th>
+                <th>{t('admin.accommodations.name')}</th>
+                <th>{t('admin.accommodations.owner')}</th>
+                <th>{t('admin.accommodations.status')}</th>
+                <th>{t('admin.accommodations.area')}</th>
               </tr>
             </thead>
             <tbody>
               {accommodations.map((a) => (
                 <tr key={a.id}>
-                  <td>{a.name}</td>
-                  <td>{a.owner?.name ?? '-'}</td>
+                  <td>{tName(a.name, i18n.language)}</td>
+                  <td>{a.owner?.name ? tName(a.owner.name, i18n.language) : '-'}</td>
                   <td>
                     <select
                       className="admin-select"
@@ -383,13 +392,13 @@ function AccommodationsTab() {
                     >
                       {ACCOMMODATION_STATUS_OPTIONS.map((s) => (
                         <option key={s} value={s}>
-                          {STATUS_BADGE[s]?.label || s}
+                          {t(`admin.statuses.${s}`, { defaultValue: s })}
                         </option>
                       ))}
                     </select>
                   </td>
                   <td>
-                    {a.prefecture} {a.city}
+                    {tPrefecture(a.prefecture, i18n.language)} {tCity(a.city, i18n.language)}
                   </td>
                 </tr>
               ))}
@@ -405,7 +414,23 @@ function AccommodationsTab() {
 // ---------- Events Tab ----------
 
 function EventsTab() {
+  const { t, i18n } = useTranslation();
   const [page, setPage] = useState(1);
+
+  function formatDate(dateStr: string) {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(i18n.language, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  }
+
+  function statusBadge(status: string) {
+    const cls = STATUS_BADGE_CLS[status] || 'badge-gray';
+    const label = t(`admin.statuses.${status}`, { defaultValue: status });
+    return <span className={`admin-badge ${cls}`}>{label}</span>;
+  }
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'events', page],
@@ -413,8 +438,8 @@ function EventsTab() {
       adminApi.events({ page: String(page), limit: String(PAGE_SIZE) }),
   });
 
-  if (isLoading) return <div className="admin-loading">読み込み中...</div>;
-  if (error) return <div className="admin-error">イベント情報の取得に失敗しました</div>;
+  if (isLoading) return <div className="admin-loading">{t('common.loading')}</div>;
+  if (error) return <div className="admin-error">{t('admin.eventsTab.fetchError')}</div>;
 
   const events: Event[] = data?.data ?? [];
   const pagination: Pagination | undefined = data?.pagination;
@@ -422,29 +447,29 @@ function EventsTab() {
   return (
     <>
       {events.length === 0 ? (
-        <div className="admin-empty">イベントが見つかりません</div>
+        <div className="admin-empty">{t('admin.eventsTab.notFound')}</div>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
-                <th>タイトル</th>
-                <th>主催者</th>
-                <th>ステータス</th>
-                <th>日付</th>
-                <th>定員</th>
-                <th>申込数</th>
+                <th>{t('admin.eventsTab.title')}</th>
+                <th>{t('admin.eventsTab.organizer')}</th>
+                <th>{t('admin.eventsTab.status')}</th>
+                <th>{t('admin.eventsTab.date')}</th>
+                <th>{t('admin.eventsTab.capacity')}</th>
+                <th>{t('admin.eventsTab.registrations')}</th>
               </tr>
             </thead>
             <tbody>
               {events.map((ev) => (
                 <tr key={ev.id}>
-                  <td>{ev.title}</td>
-                  <td>{ev.organizer?.name ?? '-'}</td>
+                  <td>{tEventTitle(ev.title, i18n.language)}</td>
+                  <td>{ev.organizer?.name ? tName(ev.organizer.name, i18n.language) : '-'}</td>
                   <td>{statusBadge(ev.status)}</td>
                   <td>{formatDate(ev.date)}</td>
-                  <td>{ev.capacity}名</td>
-                  <td>{ev.registrationCount}名</td>
+                  <td>{ev.capacity}{t('admin.eventsTab.peopleSuffix')}</td>
+                  <td>{ev.registrationCount}{t('admin.eventsTab.peopleSuffix')}</td>
                 </tr>
               ))}
             </tbody>
@@ -459,7 +484,23 @@ function EventsTab() {
 // ---------- Bookings Tab ----------
 
 function BookingsTab() {
+  const { t, i18n } = useTranslation();
   const [page, setPage] = useState(1);
+
+  function formatDate(dateStr: string) {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(i18n.language, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  }
+
+  function statusBadge(status: string) {
+    const cls = STATUS_BADGE_CLS[status] || 'badge-gray';
+    const label = t(`admin.statuses.${status}`, { defaultValue: status });
+    return <span className={`admin-badge ${cls}`}>{label}</span>;
+  }
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'bookings', page],
@@ -467,8 +508,8 @@ function BookingsTab() {
       adminApi.bookings({ page: String(page), limit: String(PAGE_SIZE) }),
   });
 
-  if (isLoading) return <div className="admin-loading">読み込み中...</div>;
-  if (error) return <div className="admin-error">予約情報の取得に失敗しました</div>;
+  if (isLoading) return <div className="admin-loading">{t('common.loading')}</div>;
+  if (error) return <div className="admin-error">{t('admin.bookingsTab.fetchError')}</div>;
 
   const bookings: Booking[] = data?.data ?? [];
   const pagination: Pagination | undefined = data?.pagination;
@@ -476,25 +517,25 @@ function BookingsTab() {
   return (
     <>
       {bookings.length === 0 ? (
-        <div className="admin-empty">予約が見つかりません</div>
+        <div className="admin-empty">{t('admin.bookingsTab.notFound')}</div>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
-                <th>ゲスト</th>
-                <th>宿泊施設</th>
-                <th>チェックイン</th>
-                <th>チェックアウト</th>
-                <th>ステータス</th>
-                <th className="th-amount">金額</th>
+                <th>{t('admin.bookingsTab.guest')}</th>
+                <th>{t('admin.bookingsTab.accommodation')}</th>
+                <th>{t('admin.bookingsTab.checkIn')}</th>
+                <th>{t('admin.bookingsTab.checkOut')}</th>
+                <th>{t('admin.bookingsTab.status')}</th>
+                <th className="th-amount">{t('admin.bookingsTab.amount')}</th>
               </tr>
             </thead>
             <tbody>
               {bookings.map((b) => (
                 <tr key={b.id}>
-                  <td>{b.guest?.name ?? '-'}</td>
-                  <td>{b.accommodation?.name ?? '-'}</td>
+                  <td>{b.guest?.name ? tName(b.guest.name, i18n.language) : '-'}</td>
+                  <td>{b.accommodation?.name ? tName(b.accommodation.name, i18n.language) : '-'}</td>
                   <td>{formatDate(b.checkIn)}</td>
                   <td>{formatDate(b.checkOut)}</td>
                   <td>{statusBadge(b.status)}</td>
@@ -514,6 +555,7 @@ function BookingsTab() {
 
 export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabKey>('users');
 
   const {
@@ -530,7 +572,7 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
     return (
       <div className="admin-page">
         <div className="admin-loading">
-          この画面にアクセスする権限がありません。
+          {t('admin.noPermission')}
           <div style={{ marginTop: 16 }}>
             <button
               className="admin-btn"
@@ -542,7 +584,7 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
               }}
               onClick={() => onNavigate('home')}
             >
-              トップに戻る
+              {t('common.backToHome')}
             </button>
           </div>
         </div>
@@ -554,37 +596,37 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
     <div className="admin-page">
       {/* Header */}
       <div className="admin-header">
-        <h1 className="admin-title">管理ダッシュボード</h1>
-        <p className="admin-sub">事務局管理画面 — TripLocal</p>
+        <h1 className="admin-title">{t('admin.title')}</h1>
+        <p className="admin-sub">{t('admin.subtitle')}</p>
       </div>
 
       {/* Stats Cards */}
       {statsLoading ? (
-        <div className="admin-loading">統計を読み込み中...</div>
+        <div className="admin-loading">{t('admin.statsLoading')}</div>
       ) : statsError ? (
-        <div className="admin-error">統計情報の取得に失敗しました</div>
+        <div className="admin-error">{t('admin.statsError')}</div>
       ) : stats ? (
         <div className="admin-stats">
           <div className="stat-card">
-            <div className="stat-label">ユーザー数</div>
+            <div className="stat-label">{t('admin.stats.users')}</div>
             <div className="stat-value">{stats.users.toLocaleString()}</div>
           </div>
           <div className="stat-card">
-            <div className="stat-label">施設数</div>
+            <div className="stat-label">{t('admin.stats.accommodations')}</div>
             <div className="stat-value">
               {stats.accommodations.toLocaleString()}
             </div>
           </div>
           <div className="stat-card">
-            <div className="stat-label">イベント数</div>
+            <div className="stat-label">{t('admin.stats.events')}</div>
             <div className="stat-value">{stats.events.toLocaleString()}</div>
           </div>
           <div className="stat-card">
-            <div className="stat-label">予約数</div>
+            <div className="stat-label">{t('admin.stats.bookings')}</div>
             <div className="stat-value">{stats.bookings.toLocaleString()}</div>
           </div>
           <div className="stat-card">
-            <div className="stat-label">総売上</div>
+            <div className="stat-label">{t('admin.stats.revenue')}</div>
             <div className="stat-value revenue">
               {formatCurrency(stats.revenue)}
             </div>
@@ -594,13 +636,13 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
 
       {/* Tabs */}
       <div className="admin-tabs">
-        {TABS.map((t) => (
+        {TAB_KEYS.map((tab) => (
           <button
-            key={t.key}
-            className={`admin-tab${activeTab === t.key ? ' active' : ''}`}
-            onClick={() => setActiveTab(t.key)}
+            key={tab.key}
+            className={`admin-tab${activeTab === tab.key ? ' active' : ''}`}
+            onClick={() => setActiveTab(tab.key)}
           >
-            {t.label}
+            {t(tab.labelKey)}
           </button>
         ))}
       </div>

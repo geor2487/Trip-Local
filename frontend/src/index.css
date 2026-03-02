@@ -2,13 +2,14 @@
 @import "./styles/variables.css";
 
 @theme {
-  --color-ink: #1a1510;
-  --color-paper: #f5f0e8;
-  --color-earth: #8b6f47;
-  --color-moss: #5a7a4a;
-  --color-rust: #c4621a;
-  --color-warm-gray: #9e9488;
-  --color-light-border: #ddd6c8;
+  --color-ink: #1a2318;
+  --color-paper: #f5f8f2;
+  --color-earth: #4a7d58;
+  --color-moss: #2b6e4e;
+  --color-rust: #38945e;
+  --color-warm-gray: #8a9488;
+  --color-light-border: #cdd8c6;
+  --color-error: #c4621a;
   --font-serif: 'Noto Serif JP Variable', 'Source Han Serif Japanese', serif;
   --font-sans: 'DM Sans Variable', 'DM Sans', sans-serif;
 }

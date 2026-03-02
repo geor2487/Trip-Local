@@ -228,7 +228,7 @@
   color: var(--warm-gray);
 }
 .event-card-slots.few {
-  color: var(--rust);
+  color: var(--error);
   font-weight: 500;
 }
 
@@ -787,7 +787,7 @@
 /* ---- ERROR MESSAGE ---- */
 .event-error {
   font-size: 13px;
-  color: var(--rust);
+  color: var(--error);
   margin-top: 8px;
   text-align: center;
 }

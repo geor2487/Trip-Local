@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import Stripe from "stripe";
+import crypto from "crypto";
 import { prisma } from "../lib/prisma.js";
 import { sendBookingConfirmationEmail } from "../lib/email.js";
 
@@ -23,7 +24,9 @@ router.post("/webhook", async (req: Request, res: Response) => {
     case "payment_intent.succeeded": {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
       const bookingId = paymentIntent.metadata.bookingId;
+      const eventId = paymentIntent.metadata.eventId;
 
+      // ── 宿泊予約の決済成功 ──
       if (bookingId) {
         await prisma.$transaction(async (tx) => {
           await tx.booking.update({
@@ -63,13 +66,38 @@ router.post("/webhook", async (req: Request, res: Response) => {
           });
         }
       }
+
+      // ── イベント参加登録の決済成功 ──
+      if (eventId) {
+        const registration = await prisma.eventRegistration.findFirst({
+          where: { stripePaymentIntentId: paymentIntent.id },
+        });
+
+        if (registration) {
+          const ticketCode = crypto.randomBytes(8).toString("hex");
+
+          await prisma.$transaction(async (tx) => {
+            await tx.eventRegistration.update({
+              where: { id: registration.id },
+              data: { status: "CONFIRMED", ticketCode },
+            });
+            await tx.eventPayment.updateMany({
+              where: { stripePaymentIntentId: paymentIntent.id },
+              data: { status: "SUCCEEDED" },
+            });
+          });
+          console.log(`Event registration ${registration.id} confirmed via webhook (ticket: ${ticketCode})`);
+        }
+      }
       break;
     }
 
     case "payment_intent.payment_failed": {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
       const bookingId = paymentIntent.metadata.bookingId;
+      const eventId = paymentIntent.metadata.eventId;
 
+      // ── 宿泊予約の決済失敗 ──
       if (bookingId) {
         const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
         if (booking) {
@@ -94,6 +122,27 @@ router.post("/webhook", async (req: Request, res: Response) => {
               data: { status: "FAILED" },
             });
           });
+        }
+      }
+
+      // ── イベント参加登録の決済失敗 ──
+      if (eventId) {
+        const registration = await prisma.eventRegistration.findFirst({
+          where: { stripePaymentIntentId: paymentIntent.id },
+        });
+
+        if (registration) {
+          await prisma.$transaction(async (tx) => {
+            await tx.eventRegistration.update({
+              where: { id: registration.id },
+              data: { status: "CANCELLED", cancelledAt: new Date() },
+            });
+            await tx.eventPayment.updateMany({
+              where: { stripePaymentIntentId: paymentIntent.id },
+              data: { status: "FAILED" },
+            });
+          });
+          console.log(`Event registration ${registration.id} cancelled due to payment failure`);
         }
       }
       break;

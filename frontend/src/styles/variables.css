@@ -1,11 +1,12 @@
 :root {
-  --ink: #1a1510;
-  --paper: #f5f0e8;
-  --earth: #8b6f47;
-  --moss: #5a7a4a;
-  --rust: #c4621a;
-  --warm-gray: #9e9488;
-  --light-border: #ddd6c8;
+  --ink: #1a2318;
+  --paper: #f5f8f2;
+  --earth: #4a7d58;
+  --moss: #2b6e4e;
+  --rust: #38945e;
+  --warm-gray: #8a9488;
+  --light-border: #cdd8c6;
+  --error: #c4621a;
   --font-serif: 'Noto Serif JP Variable', 'Source Han Serif Japanese', serif;
   --font-sans: 'DM Sans Variable', 'DM Sans', sans-serif;
 }

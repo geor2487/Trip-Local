@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { ownerApi } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { translateAmenity } from '../lib/amenity-i18n';
+import { tPrefecture, tCity, tName, tRoom } from '../lib/content-i18n';
 import '../styles/owner.css';
 
 /* ── Types ── */
@@ -78,13 +81,6 @@ const EMPTY_ROOM_FORM: RoomFormData = {
   pricePerNight: '',
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  ACTIVE: '公開中',
-  PENDING: '審査中',
-  REJECTED: '非承認',
-  DRAFT: '下書き',
-};
-
 const STATUS_CLS: Record<string, string> = {
   ACTIVE: 'owner-status-active',
   PENDING: 'owner-status-pending',
@@ -92,23 +88,31 @@ const STATUS_CLS: Record<string, string> = {
   DRAFT: 'owner-status-draft',
 };
 
-const BOOKING_STATUS_LABELS: Record<string, string> = {
-  PENDING: '決済待ち',
-  CONFIRMED: '確定済み',
-  COMPLETED: '滞在済み',
-  CANCELLED: 'キャンセル',
-};
-
-/* ── Helpers ── */
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
-}
-
 /* ── Component ── */
 export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { t, i18n } = useTranslation();
+
+  /* ── Dynamic label helpers ── */
+  const getStatusLabel = (status: string) => {
+    const key = { ACTIVE: 'statusActive', PENDING: 'statusPending', REJECTED: 'statusRejected', DRAFT: 'statusDraft' }[status];
+    return key ? t(`owner.${key}`) : status;
+  };
+  const getBookingStatusLabel = (status: string) => {
+    const key = { PENDING: 'bookingPending', CONFIRMED: 'bookingConfirmed', COMPLETED: 'bookingCompleted', CANCELLED: 'bookingCancelled' }[status];
+    return key ? t(`owner.${key}`) : status;
+  };
+
+  /* ── Locale-aware date formatter ── */
+  function formatDate(dateStr: string) {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(i18n.language, {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+    });
+  }
 
   // Tab state
   const [tab, setTab] = useState<TabKey>('accommodations');
@@ -282,7 +286,7 @@ export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
     };
 
     if (!payload.name) {
-      setFormError('施設名を入力してください');
+      setFormError(t('owner.formNameRequired'));
       return;
     }
 
@@ -307,15 +311,15 @@ export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
     };
 
     if (!payload.name) {
-      setFormError('部屋名を入力してください');
+      setFormError(t('owner.formRoomNameRequired'));
       return;
     }
     if (!payload.capacity || payload.capacity < 1) {
-      setFormError('定員を正しく入力してください');
+      setFormError(t('owner.formCapacityRequired'));
       return;
     }
     if (!payload.pricePerNight || payload.pricePerNight < 0) {
-      setFormError('価格を正しく入力してください');
+      setFormError(t('owner.formPriceRequired'));
       return;
     }
 
@@ -335,9 +339,9 @@ export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
   if (!user) {
     return (
       <div className="owner-empty" style={{ paddingTop: 120 }}>
-        <p>オーナーダッシュボードにはログインが必要です</p>
+        <p>{t('owner.loginRequired')}</p>
         <button className="owner-add-btn" onClick={() => onNavigate('login')}>
-          ログイン
+          {t('common.login')}
         </button>
       </div>
     );
@@ -358,9 +362,9 @@ export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
     <div className="owner-page">
       {/* Header */}
       <div className="owner-header">
-        <h1 className="owner-title">オーナーダッシュボード</h1>
+        <h1 className="owner-title">{t('owner.title')}</h1>
         <p className="owner-sub">
-          {user.name} さんの施設管理
+          {t('owner.subtitle', { name: user.name })}
         </p>
       </div>
 
@@ -370,13 +374,13 @@ export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
           className={`owner-tab${tab === 'accommodations' ? ' active' : ''}`}
           onClick={() => setTab('accommodations')}
         >
-          施設管理
+          {t('owner.tabs.accommodations')}
         </button>
         <button
           className={`owner-tab${tab === 'bookings' ? ' active' : ''}`}
           onClick={() => setTab('bookings')}
         >
-          予約管理
+          {t('owner.tabs.bookings')}
         </button>
       </div>
 
@@ -385,26 +389,26 @@ export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
         <>
           <div className="owner-toolbar">
             <span className="owner-toolbar-label">
-              登録施設: {accommodations.length}件
+              {t('owner.registeredCount', { count: accommodations.length })}
             </span>
             <button className="owner-add-btn" onClick={openCreateAccModal}>
-              施設を追加
+              {t('owner.addAccommodation')}
             </button>
           </div>
 
           {accommodationsQuery.isLoading ? (
-            <div className="owner-loading">読み込み中...</div>
+            <div className="owner-loading">{t('common.loading')}</div>
           ) : accommodations.length === 0 ? (
             <div className="owner-empty">
-              <p>まだ施設が登録されていません</p>
+              <p>{t('owner.noAccommodations')}</p>
               <button className="owner-add-btn" onClick={openCreateAccModal}>
-                最初の施設を追加
+                {t('owner.addFirst')}
               </button>
             </div>
           ) : (
             <div>
               {accommodations.map((acc) => {
-                const statusLabel = STATUS_LABELS[acc.status] || acc.status;
+                const statusLabel = getStatusLabel(acc.status);
                 const statusCls = STATUS_CLS[acc.status] || 'owner-status-draft';
                 const isExpanded = expandedAccId === acc.id;
 
@@ -413,16 +417,16 @@ export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
                     <div className="acc-card-main">
                       <div className="acc-card-info">
                         <div className="acc-card-top">
-                          <span className="acc-card-name">{acc.name}</span>
+                          <span className="acc-card-name">{tName(acc.name, i18n.language)}</span>
                           <span className={`owner-status ${statusCls}`}>{statusLabel}</span>
                         </div>
                         <p className="acc-card-meta">
-                          {acc.prefecture} {acc.city} ・ 部屋数: {acc.roomCount ?? 0}
+                          {tPrefecture(acc.prefecture, i18n.language)} {tCity(acc.city, i18n.language)} · {t('owner.roomCountLabel', { count: acc.roomCount ?? 0 })}
                         </p>
                         {acc.amenities.length > 0 && (
                           <div className="acc-card-amenities">
                             {acc.amenities.slice(0, 5).map((a) => (
-                              <span key={a} className="amenity-chip">{a}</span>
+                              <span key={a} className="amenity-chip">{translateAmenity(a, i18n.language)}</span>
                             ))}
                             {acc.amenities.length > 5 && (
                               <span className="amenity-chip">+{acc.amenities.length - 5}</span>
@@ -435,29 +439,29 @@ export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
                           className="acc-action-btn"
                           onClick={() => openEditAccModal(acc)}
                         >
-                          編集
+                          {t('owner.edit')}
                         </button>
                         <button
                           className="acc-action-btn primary"
                           onClick={() => toggleRooms(acc.id)}
                         >
-                          {isExpanded ? '部屋を閉じる' : '部屋管理'}
+                          {isExpanded ? t('owner.closeRooms') : t('owner.manageRooms')}
                         </button>
                         {deleteTarget === acc.id ? (
                           <div className="delete-confirm">
-                            <span className="delete-confirm-text">本当に削除しますか？</span>
+                            <span className="delete-confirm-text">{t('owner.deleteConfirm')}</span>
                             <button
                               className="acc-action-btn danger"
                               onClick={() => deleteAccMutation.mutate(acc.id)}
                               disabled={deleteAccMutation.isPending}
                             >
-                              {deleteAccMutation.isPending ? '...' : '削除'}
+                              {deleteAccMutation.isPending ? '...' : t('owner.delete')}
                             </button>
                             <button
                               className="acc-action-btn"
                               onClick={() => setDeleteTarget(null)}
                             >
-                              戻る
+                              {t('owner.back')}
                             </button>
                           </div>
                         ) : (
@@ -465,7 +469,7 @@ export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
                             className="acc-action-btn danger"
                             onClick={() => setDeleteTarget(acc.id)}
                           >
-                            削除
+                            {t('owner.delete')}
                           </button>
                         )}
                       </div>
@@ -475,31 +479,31 @@ export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
                     {isExpanded && (
                       <div className="rooms-section">
                         <div className="rooms-header">
-                          <span className="rooms-title">部屋一覧</span>
+                          <span className="rooms-title">{t('owner.roomsList')}</span>
                           <button
                             className="rooms-add-btn"
                             onClick={() => openCreateRoomModal(acc.id)}
                           >
-                            部屋を追加
+                            {t('owner.addRoom')}
                           </button>
                         </div>
                         {roomsQuery.isLoading ? (
-                          <div className="rooms-empty">読み込み中...</div>
+                          <div className="rooms-empty">{t('common.loading')}</div>
                         ) : rooms.length === 0 ? (
-                          <div className="rooms-empty">部屋がまだ登録されていません</div>
+                          <div className="rooms-empty">{t('owner.noRooms')}</div>
                         ) : (
                           rooms.map((room) => (
                             <div key={room.id} className="room-row">
-                              <span className="room-name">{room.name}</span>
-                              <span className="room-detail">定員 {room.capacity}名</span>
+                              <span className="room-name">{tRoom(room.name, i18n.language)}</span>
+                              <span className="room-detail">{t('owner.roomCapacity', { count: room.capacity })}</span>
                               <span className="room-price">
-                                ¥{room.pricePerNight.toLocaleString()}/泊
+                                ¥{room.pricePerNight.toLocaleString()}{i18n.language === 'ja' ? '〜' : '+'}
                               </span>
                               <button
                                 className="room-edit-btn"
                                 onClick={() => openEditRoomModal(acc.id, room)}
                               >
-                                編集
+                                {t('owner.edit')}
                               </button>
                             </div>
                           ))
@@ -518,39 +522,39 @@ export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
       {tab === 'bookings' && (
         <>
           <div className="booking-select-wrapper">
-            <label className="booking-select-label">施設を選択</label>
+            <label className="booking-select-label">{t('owner.selectFacility')}</label>
             <select
               className="booking-select"
               value={selectedAccId}
               onChange={(e) => setSelectedAccId(e.target.value)}
             >
-              <option value="">-- 施設を選択してください --</option>
+              <option value="">{t('owner.selectFacilityPrompt')}</option>
               {accommodations.map((acc) => (
-                <option key={acc.id} value={acc.id}>{acc.name}</option>
+                <option key={acc.id} value={acc.id}>{tName(acc.name, i18n.language)}</option>
               ))}
             </select>
           </div>
 
           {!selectedAccId ? (
             <div className="owner-empty">
-              施設を選択すると予約一覧が表示されます
+              {t('owner.selectToView')}
             </div>
           ) : bookingsQuery.isLoading ? (
-            <div className="owner-loading">読み込み中...</div>
+            <div className="owner-loading">{t('common.loading')}</div>
           ) : bookings.length === 0 ? (
-            <div className="owner-empty">この施設にはまだ予約がありません</div>
+            <div className="owner-empty">{t('owner.noBookings')}</div>
           ) : (
             <div>
               {bookings.map((bk) => {
-                const statusLabel = BOOKING_STATUS_LABELS[bk.status] || bk.status;
+                const statusLabel = getBookingStatusLabel(bk.status);
                 return (
                   <div key={bk.id} className="booking-card">
                     <div className="booking-info">
-                      <p className="booking-guest">{bk.guestName}</p>
+                      <p className="booking-guest">{tName(bk.guestName, i18n.language)}</p>
                       <p className="booking-dates">
                         {formatDate(bk.checkIn)} ~ {formatDate(bk.checkOut)}
-                        {bk.roomName && ` ・ ${bk.roomName}`}
-                        {bk.guests > 0 && ` ・ ${bk.guests}名`}
+                        {bk.roomName && ` · ${tRoom(bk.roomName, i18n.language)}`}
+                        {bk.guests > 0 && ` · ${t('owner.guestsCount', { count: bk.guests })}`}
                       </p>
                     </div>
                     <span className={`booking-status booking-status-${bk.status}`}>
@@ -574,87 +578,87 @@ export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
             <button className="owner-modal-close" onClick={closeAccModal}>
               ×
             </button>
-            <h2>{editingAcc ? '施設を編集' : '施設を追加'}</h2>
+            <h2>{editingAcc ? t('owner.editTitle') : t('owner.addTitle')}</h2>
 
             {formError && <div className="owner-error">{formError}</div>}
 
             <form onSubmit={handleAccSubmit}>
               <div className="owner-form-group">
-                <label className="owner-form-label">施設名</label>
+                <label className="owner-form-label">{t('owner.formName')}</label>
                 <input
                   className="owner-form-input"
                   type="text"
                   value={accForm.name}
                   onChange={(e) => setAccForm({ ...accForm, name: e.target.value })}
-                  placeholder="例: 古民家ゲストハウス 風の道"
+                  placeholder={t('owner.formNamePlaceholder')}
                 />
               </div>
 
               <div className="owner-form-group">
-                <label className="owner-form-label">説明</label>
+                <label className="owner-form-label">{t('owner.formDescription')}</label>
                 <textarea
                   className="owner-form-textarea"
                   value={accForm.description}
                   onChange={(e) => setAccForm({ ...accForm, description: e.target.value })}
-                  placeholder="施設の特徴や魅力を記入してください"
+                  placeholder={t('owner.formDescriptionPlaceholder')}
                 />
               </div>
 
               <div className="owner-form-group">
-                <label className="owner-form-label">住所</label>
+                <label className="owner-form-label">{t('owner.formAddress')}</label>
                 <input
                   className="owner-form-input"
                   type="text"
                   value={accForm.address}
                   onChange={(e) => setAccForm({ ...accForm, address: e.target.value })}
-                  placeholder="例: 大字〇〇123-4"
+                  placeholder={t('owner.formAddressPlaceholder')}
                 />
               </div>
 
               <div className="owner-form-row">
                 <div className="owner-form-group">
-                  <label className="owner-form-label">市区町村</label>
+                  <label className="owner-form-label">{t('owner.formCity')}</label>
                   <input
                     className="owner-form-input"
                     type="text"
                     value={accForm.city}
                     onChange={(e) => setAccForm({ ...accForm, city: e.target.value })}
-                    placeholder="例: 白川村"
+                    placeholder={t('owner.formCityPlaceholder')}
                   />
                 </div>
                 <div className="owner-form-group">
-                  <label className="owner-form-label">都道府県</label>
+                  <label className="owner-form-label">{t('owner.formPrefecture')}</label>
                   <input
                     className="owner-form-input"
                     type="text"
                     value={accForm.prefecture}
                     onChange={(e) => setAccForm({ ...accForm, prefecture: e.target.value })}
-                    placeholder="例: 岐阜県"
+                    placeholder={t('owner.formPrefecturePlaceholder')}
                   />
                 </div>
               </div>
 
               <div className="owner-form-group">
-                <label className="owner-form-label">郵便番号</label>
+                <label className="owner-form-label">{t('owner.formZipCode')}</label>
                 <input
                   className="owner-form-input"
                   type="text"
                   value={accForm.zipCode}
                   onChange={(e) => setAccForm({ ...accForm, zipCode: e.target.value })}
-                  placeholder="例: 501-5627"
+                  placeholder={t('owner.formZipCodePlaceholder')}
                 />
               </div>
 
               <div className="owner-form-group">
-                <label className="owner-form-label">アメニティ</label>
+                <label className="owner-form-label">{t('owner.formAmenities')}</label>
                 <input
                   className="owner-form-input"
                   type="text"
                   value={accForm.amenities}
                   onChange={(e) => setAccForm({ ...accForm, amenities: e.target.value })}
-                  placeholder="例: Wi-Fi, 温泉, 駐車場, 朝食付き"
+                  placeholder={t('owner.formAmenitiesPlaceholder')}
                 />
-                <p className="owner-form-hint">カンマ区切りで入力してください</p>
+                <p className="owner-form-hint">{t('owner.formAmenitiesHint')}</p>
               </div>
 
               <div className="owner-form-actions">
@@ -663,14 +667,14 @@ export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
                   className="owner-form-cancel"
                   onClick={closeAccModal}
                 >
-                  キャンセル
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="owner-form-submit"
                   disabled={isMutating}
                 >
-                  {isMutating ? '保存中...' : editingAcc ? '更新する' : '追加する'}
+                  {isMutating ? t('owner.saving') : editingAcc ? t('owner.update') : t('owner.add')}
                 </button>
               </div>
             </form>
@@ -685,53 +689,53 @@ export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
             <button className="owner-modal-close" onClick={closeRoomModal}>
               ×
             </button>
-            <h2>{editingRoom ? '部屋を編集' : '部屋を追加'}</h2>
+            <h2>{editingRoom ? t('owner.editRoomTitle') : t('owner.addRoomTitle')}</h2>
 
             {formError && <div className="owner-error">{formError}</div>}
 
             <form onSubmit={handleRoomSubmit}>
               <div className="owner-form-group">
-                <label className="owner-form-label">部屋名</label>
+                <label className="owner-form-label">{t('owner.formRoomName')}</label>
                 <input
                   className="owner-form-input"
                   type="text"
                   value={roomForm.name}
                   onChange={(e) => setRoomForm({ ...roomForm, name: e.target.value })}
-                  placeholder="例: 和室 8畳"
+                  placeholder={t('owner.formRoomNamePlaceholder')}
                 />
               </div>
 
               <div className="owner-form-group">
-                <label className="owner-form-label">説明</label>
+                <label className="owner-form-label">{t('owner.formRoomDescription')}</label>
                 <textarea
                   className="owner-form-textarea"
                   value={roomForm.description}
                   onChange={(e) => setRoomForm({ ...roomForm, description: e.target.value })}
-                  placeholder="部屋の特徴を記入してください"
+                  placeholder={t('owner.formRoomDescriptionPlaceholder')}
                 />
               </div>
 
               <div className="owner-form-row">
                 <div className="owner-form-group">
-                  <label className="owner-form-label">定員（名）</label>
+                  <label className="owner-form-label">{t('owner.formCapacity')}</label>
                   <input
                     className="owner-form-input"
                     type="number"
                     min="1"
                     value={roomForm.capacity}
                     onChange={(e) => setRoomForm({ ...roomForm, capacity: e.target.value })}
-                    placeholder="例: 4"
+                    placeholder={t('owner.formCapacityPlaceholder')}
                   />
                 </div>
                 <div className="owner-form-group">
-                  <label className="owner-form-label">1泊あたりの価格（円）</label>
+                  <label className="owner-form-label">{t('owner.formPricePerNight')}</label>
                   <input
                     className="owner-form-input"
                     type="number"
                     min="0"
                     value={roomForm.pricePerNight}
                     onChange={(e) => setRoomForm({ ...roomForm, pricePerNight: e.target.value })}
-                    placeholder="例: 12000"
+                    placeholder={t('owner.formPricePerNightPlaceholder')}
                   />
                 </div>
               </div>
@@ -742,14 +746,14 @@ export function OwnerDashboardPage({ onNavigate }: OwnerDashboardPageProps) {
                   className="owner-form-cancel"
                   onClick={closeRoomModal}
                 >
-                  キャンセル
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="owner-form-submit"
                   disabled={isMutating}
                 >
-                  {isMutating ? '保存中...' : editingRoom ? '更新する' : '追加する'}
+                  {isMutating ? t('owner.saving') : editingRoom ? t('owner.update') : t('owner.add')}
                 </button>
               </div>
             </form>

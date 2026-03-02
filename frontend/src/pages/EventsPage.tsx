@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { eventApi } from '../lib/api';
+import { tEventTitle, tEventLocation } from '../lib/content-i18n';
 import '../styles/events.css';
 
 interface EventsPageProps {
@@ -30,26 +32,30 @@ interface Pagination {
 }
 
 const CATEGORIES = [
-  { value: '', label: 'すべて' },
-  { value: '文化体験', label: '文化体験' },
-  { value: 'アウトドア', label: 'アウトドア' },
-  { value: '食', label: '食' },
-  { value: 'ワークショップ', label: 'ワークショップ' },
-  { value: '祭り', label: '祭り' },
-  { value: 'その他', label: 'その他' },
+  { value: '' },
+  { value: '文化体験' },
+  { value: 'アウトドア' },
+  { value: '食' },
+  { value: 'ワークショップ' },
+  { value: '祭り' },
+  { value: 'その他' },
 ];
 
-function formatEventDate(dateStr: string): string {
+function formatEventDate(dateStr: string, lang: string): string {
   const d = new Date(dateStr);
-  const dow = ['日', '月', '火', '水', '木', '金', '土'][d.getDay()];
-  const month = d.getMonth() + 1;
-  const day = d.getDate();
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  return `${month}/${day}（${dow}）${hours}:${minutes}`;
+  if (lang === 'ja') {
+    const dow = ['日', '月', '火', '水', '木', '金', '土'][d.getDay()];
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${month}/${day}（${dow}）${hours}:${minutes}`;
+  }
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
 export function EventsPage({ onNavigate, searchParams }: EventsPageProps) {
+  const { t, i18n } = useTranslation();
   const [keyword, setKeyword] = useState(searchParams?.keyword ?? '');
   const [city, setCity] = useState(searchParams?.city ?? '');
   const [category, setCategory] = useState(searchParams?.category ?? '');
@@ -87,9 +93,9 @@ export function EventsPage({ onNavigate, searchParams }: EventsPageProps) {
     <div className="events-page">
       {/* HEADER */}
       <div className="events-page-header">
-        <h1 className="events-page-title">体験イベント</h1>
+        <h1 className="events-page-title">{t('events.title')}</h1>
         <p className="events-page-sub">
-          地域の文化・自然・食を五感で楽しむ体験プログラム
+          {t('events.subtitle')}
         </p>
       </div>
 
@@ -99,7 +105,7 @@ export function EventsPage({ onNavigate, searchParams }: EventsPageProps) {
           <input
             type="text"
             className="events-search-input"
-            placeholder="キーワードで探す（例: 陶芸、ハイキング、味噌作り...）"
+            placeholder={t('events.searchPlaceholder')}
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
           />
@@ -108,7 +114,7 @@ export function EventsPage({ onNavigate, searchParams }: EventsPageProps) {
             value={city}
             onChange={(e) => { setCity(e.target.value); setPage(1); }}
           >
-            <option value="">全エリア</option>
+            <option value="">{t('events.allAreas')}</option>
             {cities.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
@@ -123,7 +129,7 @@ export function EventsPage({ onNavigate, searchParams }: EventsPageProps) {
               className={`events-chip${category === cat.value ? ' active' : ''}`}
               onClick={() => handleCategoryChange(cat.value)}
             >
-              {cat.label}
+              {cat.value === '' ? t('events.allCategories') : t(`events.categories.${cat.value}`)}
             </button>
           ))}
         </div>
@@ -131,10 +137,10 @@ export function EventsPage({ onNavigate, searchParams }: EventsPageProps) {
 
       {/* CONTENT */}
       {isLoading ? (
-        <div className="events-loading">読み込み中...</div>
+        <div className="events-loading">{t('common.loading')}</div>
       ) : events.length === 0 ? (
         <div className="events-empty">
-          条件に一致するイベントが見つかりません
+          {t('events.noResults')}
         </div>
       ) : (
         <>
@@ -156,22 +162,22 @@ export function EventsPage({ onNavigate, searchParams }: EventsPageProps) {
                       alt={event.title}
                     />
                     {event.category && (
-                      <span className="event-card-category">{event.category}</span>
+                      <span className="event-card-category">{t(`events.categories.${event.category}`) || event.category}</span>
                     )}
                   </div>
                   <div className="event-card-body">
-                    <p className="event-card-date">{formatEventDate(event.date)}</p>
-                    <h3 className="event-card-title">{event.title}</h3>
+                    <p className="event-card-date">{formatEventDate(event.date, i18n.language)}</p>
+                    <h3 className="event-card-title">{tEventTitle(event.title, i18n.language)}</h3>
                     <p className="event-card-location">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                         <circle cx="12" cy="10" r="3" />
                       </svg>
-                      {event.location}
+                      {tEventLocation(event.location, i18n.language)}
                     </p>
                     <div className="event-card-footer">
                       {event.price === 0 ? (
-                        <span className="event-card-price free">無料</span>
+                        <span className="event-card-price free">{t('events.free')}</span>
                       ) : (
                         <span className="event-card-price">
                           ¥{event.price.toLocaleString()}
@@ -179,11 +185,11 @@ export function EventsPage({ onNavigate, searchParams }: EventsPageProps) {
                       )}
                       {remaining <= 0 ? (
                         <span className="event-card-slots" style={{ color: 'var(--warm-gray)' }}>
-                          満席
+                          {t('events.full')}
                         </span>
                       ) : (
                         <span className={`event-card-slots${isFew ? ' few' : ''}`}>
-                          残り{remaining}席
+                          {t('events.remaining', { count: remaining })}
                         </span>
                       )}
                     </div>
@@ -201,7 +207,7 @@ export function EventsPage({ onNavigate, searchParams }: EventsPageProps) {
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
               >
-                前へ
+                {t('common.previous')}
               </button>
               {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
                 <button
@@ -217,7 +223,7 @@ export function EventsPage({ onNavigate, searchParams }: EventsPageProps) {
                 disabled={page >= pagination.totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                次へ
+                {t('common.next')}
               </button>
             </div>
           )}

@@ -126,7 +126,7 @@
   font-family: var(--font-sans);
 }
 .room-option:hover { border-color: var(--earth); }
-.room-option.selected { border-color: var(--rust); background: rgba(196,98,26,0.04); }
+.room-option.selected { border-color: var(--rust); background: rgba(56,148,94,0.04); }
 .room-name { font-weight: 500; font-size: 15px; }
 .room-cap { font-size: 13px; color: var(--warm-gray); margin-top: 2px; }
 .room-price { font-family: var(--font-serif); font-size: 18px; font-weight: 600; }
@@ -192,7 +192,7 @@
   margin-top: 1px;
 }
 .cal-day.disabled .cal-remain {
-  color: var(--rust);
+  color: var(--error);
 }
 
 /* ---- REVIEWS ---- */
@@ -253,7 +253,7 @@
 }
 .refund-full { font-weight: 500; color: var(--moss); }
 .refund-half { font-weight: 500; color: var(--earth); }
-.refund-none { font-weight: 500; color: var(--rust); }
+.refund-none { font-weight: 500; color: var(--error); }
 
 /* Booking Card */
 .booking-card-sidebar {

@@ -1,7 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { accommodationApi, bookingApi } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { translateAmenity } from '../lib/amenity-i18n';
+import { tPrefecture, tCity, tName, tDesc, tRoom } from '../lib/content-i18n';
 import '../styles/detail.css';
 
 interface Props {
@@ -30,7 +33,9 @@ const AMENITY_ICONS: Record<string, string> = {
   '自家製朝食': '🍚', '餅つき体験': '🎍',
 };
 
+
 export function PropertyDetailPage({ id, onNavigate }: Props) {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [selectedRoom, setSelectedRoom] = useState('');
   const [checkIn, setCheckIn] = useState('');
@@ -83,7 +88,7 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
       await bookingApi.create({ roomId: selectedRoom, checkIn, checkOut, guests });
       setBookSuccess(true);
     } catch (err: any) {
-      setBookError(err.message || '予約に失敗しました');
+      setBookError(err.message || t('detail.bookingError'));
     } finally {
       setBooking(false);
     }
@@ -95,8 +100,10 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
   const prevMonth = () => { if (calMonth === 1) { setCalYear(calYear - 1); setCalMonth(12); } else setCalMonth(calMonth - 1); };
   const nextMonth = () => { if (calMonth === 12) { setCalYear(calYear + 1); setCalMonth(1); } else setCalMonth(calMonth + 1); };
 
-  if (isLoading) return <div style={{ padding: '120px 40px', textAlign: 'center', color: 'var(--warm-gray)' }}>読み込み中...</div>;
-  if (!accom) return <div style={{ padding: '120px 40px', textAlign: 'center', color: 'var(--warm-gray)' }}>施設が見つかりません</div>;
+  const dayNames = i18n.language === 'ja' ? ['日', '月', '火', '水', '木', '金', '土'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  if (isLoading) return <div style={{ padding: '120px 40px', textAlign: 'center', color: 'var(--warm-gray)' }}>{t('common.loading')}</div>;
+  if (!accom) return <div style={{ padding: '120px 40px', textAlign: 'center', color: 'var(--warm-gray)' }}>{t('detail.notFound')}</div>;
 
   if (bookSuccess) {
     return (
@@ -106,11 +113,11 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 className="success-title">予約を受け付けました</h2>
-        <p className="success-desc">決済が完了すると予約が確定されます。</p>
+        <h2 className="success-title">{t('detail.bookingSuccess')}</h2>
+        <p className="success-desc">{t('detail.bookingSuccessDesc')}</p>
         <div className="success-actions">
-          <button className="success-btn-primary" onClick={() => onNavigate('bookings')}>マイ予約を確認</button>
-          <button className="success-btn-outline" onClick={() => onNavigate('home')}>トップに戻る</button>
+          <button className="success-btn-primary" onClick={() => onNavigate('bookings')}>{t('detail.viewBookings')}</button>
+          <button className="success-btn-outline" onClick={() => onNavigate('home')}>{t('detail.backToHome')}</button>
         </div>
       </div>
     );
@@ -135,11 +142,11 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
         {/* LEFT */}
         <div>
           <div className="detail-header">
-            <p className="detail-region">{accom.prefecture} · {accom.city}</p>
-            <h1 className="detail-title">{accom.name}</h1>
+            <p className="detail-region">{tPrefecture(accom.prefecture, i18n.language)} · {tCity(accom.city, i18n.language)}</p>
+            <h1 className="detail-title">{tName(accom.name, i18n.language)}</h1>
             <div className="detail-meta">
-              <span>最大{rooms.reduce((max, r) => Math.max(max, r.capacity), 0)}名</span>
-              <span>{rooms.length}部屋</span>
+              <span>{t('detail.maxGuests', { count: rooms.reduce((max, r) => Math.max(max, r.capacity), 0) })}</span>
+              <span>{t('detail.roomCount', { count: rooms.length })}</span>
             </div>
           </div>
 
@@ -149,22 +156,22 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
             <div className="host-row">
               <div className="host-avatar" />
               <div>
-                <div className="host-name">{accom.owner.name} さんのお宿</div>
-                <div className="host-sub">オーナー</div>
+                <div className="host-name">{t('detail.hostTitle', { name: tName(accom.owner.name, i18n.language) })}</div>
+                <div className="host-sub">{t('detail.hostRole')}</div>
               </div>
             </div>
           )}
 
-          <p className="desc">{accom.description}</p>
+          <p className="desc">{tDesc(accom.description, i18n.language)}</p>
 
           <hr className="divider" />
 
-          <h3 className="detail-section-title">設備・アメニティ</h3>
+          <h3 className="detail-section-title">{t('detail.amenities')}</h3>
           <div className="amenities-grid">
             {(accom.amenities as string[]).map((a: string) => (
               <div key={a} className="amenity">
                 <span className="amenity-icon">{AMENITY_ICONS[a] || '✦'}</span>
-                {a}
+                {translateAmenity(a, i18n.language)}
               </div>
             ))}
           </div>
@@ -172,7 +179,7 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
           <hr className="divider" />
 
           {/* ROOMS */}
-          <h3 className="detail-section-title">お部屋を選ぶ</h3>
+          <h3 className="detail-section-title">{t('detail.selectRoom')}</h3>
           <div className="rooms-list">
             {rooms.map((room) => (
               <button
@@ -181,12 +188,11 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
                 onClick={() => setSelectedRoom(room.id)}
               >
                 <div>
-                  <div className="room-name">{room.name}</div>
-                  <div className="room-cap">定員 {room.capacity}名</div>
+                  <div className="room-name">{tRoom(room.name, i18n.language)}</div>
+                  <div className="room-cap">{t('detail.roomCapacity', { count: room.capacity })}</div>
                 </div>
                 <div className="room-price">
-                  ¥{room.pricePerNight.toLocaleString()}
-                  <span className="room-price-unit"> / 泊</span>
+                  ¥{room.pricePerNight.toLocaleString()}{i18n.language === 'ja' ? '〜' : '+'}
                 </div>
               </button>
             ))}
@@ -196,15 +202,15 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
 
           {/* CALENDAR */}
           <div className="calendar-section">
-            <h3 className="detail-section-title">空き状況</h3>
+            <h3 className="detail-section-title">{t('detail.availability')}</h3>
             <div className="calendar-mini">
               <div className="cal-header">
                 <button className="cal-nav-btn" onClick={prevMonth}>◁</button>
-                <span className="cal-header-title">{calYear}年 {calMonth}月</span>
+                <span className="cal-header-title">{i18n.language === 'ja' ? `${calYear}年 ${calMonth}月` : new Date(calYear, calMonth - 1).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}</span>
                 <button className="cal-nav-btn" onClick={nextMonth}>▷</button>
               </div>
               <div className="cal-grid">
-                {['日', '月', '火', '水', '木', '金', '土'].map((d) => (
+                {dayNames.map((d) => (
                   <div key={d} className="cal-day-head">{d}</div>
                 ))}
                 {Array.from({ length: firstDow }).map((_, i) => <div key={`e-${i}`} />)}
@@ -222,7 +228,7 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
                     >
                       {day}
                       {avail && !isPast && (
-                        <div className="cal-remain">{isAvailable ? `残${avail.remainingRooms}` : '満'}</div>
+                        <div className="cal-remain">{isAvailable ? t('detail.remainingShort', { count: avail.remainingRooms }) : t('detail.fullShort')}</div>
                       )}
                     </div>
                   );
@@ -236,19 +242,19 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
         <div>
           {/* Cancel Policy */}
           <div className="cancel-policy">
-            <h4>キャンセルポリシー</h4>
+            <h4>{t('detail.cancellationPolicy')}</h4>
             <ul className="cancel-policy-list">
               <li className="cancel-policy-item">
-                <span>7日前まで</span>
-                <span className="refund-full">全額返金</span>
+                <span>{t('detail.cancel7days')}</span>
+                <span className="refund-full">{t('detail.refundFull')}</span>
               </li>
               <li className="cancel-policy-item">
-                <span>3〜6日前</span>
-                <span className="refund-half">50% 返金</span>
+                <span>{t('detail.cancel3to6days')}</span>
+                <span className="refund-half">{t('detail.refundHalf')}</span>
               </li>
               <li className="cancel-policy-item">
-                <span>2日前〜当日</span>
-                <span className="refund-none">返金なし</span>
+                <span>{t('detail.cancel2days')}</span>
+                <span className="refund-none">{t('detail.refundNone')}</span>
               </li>
             </ul>
           </div>
@@ -257,35 +263,34 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
           <div className="booking-card-sidebar">
             {selectedRoomObj ? (
               <div className="booking-price-row">
-                <span className="booking-price">¥{selectedRoomObj.pricePerNight.toLocaleString()}</span>
-                <span className="booking-price-unit">/ 泊</span>
+                <span className="booking-price">¥{selectedRoomObj.pricePerNight.toLocaleString()}{i18n.language === 'ja' ? '〜' : '+'}</span>
               </div>
             ) : (
               <div className="booking-price-row">
-                <span className="booking-price" style={{ fontSize: 16, color: 'var(--warm-gray)' }}>お部屋を選択してください</span>
+                <span className="booking-price" style={{ fontSize: 16, color: 'var(--warm-gray)' }}>{t('detail.selectRoomPrompt')}</span>
               </div>
             )}
 
             <div className="booking-fields">
               <div className="bfield">
-                <div className="bfield-label">チェックイン</div>
+                <div className="bfield-label">{t('detail.checkIn')}</div>
                 <input type="date" value={checkIn} min={today} onChange={(e) => setCheckIn(e.target.value)} />
               </div>
               <div className="bfield">
-                <div className="bfield-label">チェックアウト</div>
+                <div className="bfield-label">{t('detail.checkOut')}</div>
                 <input type="date" value={checkOut} min={checkIn || today} onChange={(e) => setCheckOut(e.target.value)} />
               </div>
             </div>
 
             <div className="bguests">
               <div>
-                <div className="bguests-label">宿泊人数</div>
-                <div style={{ fontSize: 14, marginTop: 3 }}>大人 {guests}名</div>
+                <div className="bguests-label">{t('detail.guestsLabel')}</div>
+                <div style={{ fontSize: 14, marginTop: 3 }}>{t('detail.adultsCount', { count: guests })}</div>
               </div>
               <div className="bguests-ctrl">
-                <button className="bguests-btn" onClick={() => setGuests((g) => Math.max(1, g - 1))}>−</button>
+                <button className="bguests-btn" onClick={() => setGuests((g) => Math.max(1, g - 1))}>-</button>
                 <span>{guests}</span>
-                <button className="bguests-btn" onClick={() => setGuests((g) => Math.min(selectedRoomObj?.capacity ?? 6, g + 1))}>＋</button>
+                <button className="bguests-btn" onClick={() => setGuests((g) => Math.min(selectedRoomObj?.capacity ?? 6, g + 1))}>+</button>
               </div>
             </div>
 
@@ -294,9 +299,9 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
               disabled={booking || !selectedRoom || nights < 1}
               onClick={handleBook}
             >
-              {booking ? '処理中...' : !user ? 'ログインして予約' : '予約リクエストを送る'}
+              {booking ? t('common.processing') : !user ? t('detail.loginToReserve') : t('detail.reserveButton')}
             </button>
-            <p className="booking-note">確定まで請求はありません</p>
+            <p className="booking-note">{t('detail.noCharge')}</p>
 
             {bookError && (
               <p style={{ fontSize: 13, color: 'var(--rust)', marginBottom: 16 }}>{bookError}</p>
@@ -305,11 +310,11 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
             {nights > 0 && selectedRoomObj && (
               <div className="price-breakdown">
                 <div className="price-row">
-                  <span className="label-dotted">¥{selectedRoomObj.pricePerNight.toLocaleString()} × {nights}泊</span>
+                  <span className="label-dotted">¥{selectedRoomObj.pricePerNight.toLocaleString()} × {t('detail.nightsCount', { count: nights })}</span>
                   <span>¥{totalPrice.toLocaleString()}</span>
                 </div>
                 <div className="price-row total">
-                  <span>合計（税込）</span>
+                  <span>{t('detail.totalIncTax')}</span>
                   <span>¥{totalPrice.toLocaleString()}</span>
                 </div>
               </div>

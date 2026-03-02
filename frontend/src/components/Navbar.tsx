@@ -23,7 +23,7 @@ export function Navbar({ onNavigate, currentPage, showBack }: NavbarProps) {
       </button>
 
       {showBack ? (
-        <button className="nav-back" onClick={() => onNavigate('home')}>
+        <button className="nav-back" onClick={() => history.back()}>
           {t('nav.backToSearch')}
         </button>
       ) : user ? (

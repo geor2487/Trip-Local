@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { bookingApi } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { tPrefecture, tCity, tName } from '../lib/content-i18n';
 import '../styles/bookings.css';
 
 interface MyBookingsPageProps {
@@ -29,17 +31,20 @@ interface Booking {
   };
 }
 
-const STATUS_MAP: Record<string, { label: string; cls: string }> = {
-  CONFIRMED: { label: '確定済み', cls: 'status-confirmed' },
-  CANCELLED: { label: 'キャンセル済', cls: 'status-cancelled' },
-  COMPLETED: { label: '滞在済み', cls: 'status-completed' },
-  PENDING: { label: '決済待ち', cls: 'status-pending' },
+const STATUS_CLS: Record<string, string> = {
+  CONFIRMED: 'status-confirmed',
+  CANCELLED: 'status-cancelled',
+  COMPLETED: 'status-completed',
+  PENDING: 'status-pending',
 };
 
-function formatDate(dateStr: string) {
+function formatDate(dateStr: string, lang: string) {
   const d = new Date(dateStr);
-  const dow = ['日', '月', '火', '水', '木', '金', '土'][d.getDay()];
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${dow}）`;
+  if (lang === 'ja') {
+    const dow = ['日', '月', '火', '水', '木', '金', '土'][d.getDay()];
+    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${dow}）`;
+  }
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' });
 }
 
 function getNights(checkIn: string, checkOut: string) {
@@ -47,8 +52,10 @@ function getNights(checkIn: string, checkOut: string) {
 }
 
 export function MyBookingsPage({ onNavigate }: MyBookingsPageProps) {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const getStatusLabel = (status: string) => t(`bookings.status.${status}`) || status;
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
   const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
   const [cancelling, setCancelling] = useState(false);
@@ -63,8 +70,8 @@ export function MyBookingsPage({ onNavigate }: MyBookingsPageProps) {
   if (!user) {
     return (
       <div className="bookings-login">
-        <p>予約を確認するにはログインしてください</p>
-        <button className="bookings-empty-btn" onClick={() => onNavigate('login')}>ログイン</button>
+        <p>{t('bookings.loginRequired')}</p>
+        <button className="bookings-empty-btn" onClick={() => onNavigate('login')}>{t('common.login')}</button>
       </div>
     );
   }
@@ -89,7 +96,7 @@ export function MyBookingsPage({ onNavigate }: MyBookingsPageProps) {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       refetch();
     } catch (err: any) {
-      alert(err.message || 'キャンセルに失敗しました');
+      alert(err.message || t('bookings.cancelError'));
     } finally {
       setCancelling(false);
     }
@@ -103,9 +110,9 @@ export function MyBookingsPage({ onNavigate }: MyBookingsPageProps) {
   return (
     <div className="bookings-page">
       <div className="page-header">
-        <h1 className="page-title">マイ予約</h1>
+        <h1 className="page-title">{t('bookings.title')}</h1>
         <p className="page-sub">
-          現在の予約: {upcoming.length}件 ／ 過去の予約: {past.length}件
+          {t('bookings.summary', { upcoming: upcoming.length, past: past.length })}
         </p>
       </div>
 
@@ -115,31 +122,31 @@ export function MyBookingsPage({ onNavigate }: MyBookingsPageProps) {
           className={`tab${tab === 'upcoming' ? ' active' : ''}`}
           onClick={() => setTab('upcoming')}
         >
-          予定・確定済み
+          {t('bookings.upcoming')}
         </button>
         <button
           className={`tab${tab === 'past' ? ' active' : ''}`}
           onClick={() => setTab('past')}
         >
-          過去の予約
+          {t('bookings.past')}
         </button>
       </div>
 
       {isLoading ? (
-        <div className="bookings-empty">読み込み中...</div>
+        <div className="bookings-empty">{t('common.loading')}</div>
       ) : displayed.length === 0 ? (
         <div className="bookings-empty">
-          {tab === 'upcoming' ? '予定の予約はありません' : '過去の予約はありません'}
+          {tab === 'upcoming' ? t('bookings.noUpcoming') : t('bookings.noPast')}
           {tab === 'upcoming' && (
             <div>
-              <button className="bookings-empty-btn" onClick={() => onNavigate('home')}>宿を探す</button>
+              <button className="bookings-empty-btn" onClick={() => onNavigate('home')}>{t('bookings.findStays')}</button>
             </div>
           )}
         </div>
       ) : (
         <div>
           {displayed.map((b) => {
-            const status = STATUS_MAP[b.status] || STATUS_MAP.PENDING;
+            const statusCls = STATUS_CLS[b.status] || STATUS_CLS.PENDING;
             const nights = getNights(b.checkIn, b.checkOut);
 
             return (
@@ -151,11 +158,11 @@ export function MyBookingsPage({ onNavigate }: MyBookingsPageProps) {
                   />
                 </div>
                 <div className="bk-body">
-                  <span className={`status-badge ${status.cls}`}>{status.label}</span>
-                  <p className="bk-region">{b.room.accommodation.prefecture} · {b.room.accommodation.city}</p>
-                  <h3 className="bk-name">{b.room.accommodation.name}</h3>
+                  <span className={`status-badge ${statusCls}`}>{getStatusLabel(b.status)}</span>
+                  <p className="bk-region">{tPrefecture(b.room.accommodation.prefecture, i18n.language)} · {tCity(b.room.accommodation.city, i18n.language)}</p>
+                  <h3 className="bk-name">{tName(b.room.accommodation.name, i18n.language)}</h3>
                   <p className="bk-dates">
-                    {formatDate(b.checkIn)} → {formatDate(b.checkOut)} · {nights}泊 · {b.guests}名
+                    {formatDate(b.checkIn, i18n.language)} → {formatDate(b.checkOut, i18n.language)} · {t('bookings.nightsAndGuests', { nights, guests: b.guests })}
                   </p>
                   <p className="bk-price">¥{b.totalPrice.toLocaleString()}</p>
                 </div>
@@ -164,14 +171,14 @@ export function MyBookingsPage({ onNavigate }: MyBookingsPageProps) {
                     className="action-btn btn-primary"
                     onClick={() => onNavigate('detail', { id: b.room.accommodation.id })}
                   >
-                    予約詳細を見る
+                    {t('bookings.viewDetail')}
                   </button>
                   {(b.status === 'CONFIRMED' || b.status === 'PENDING') && (
                     <button
                       className="action-btn btn-danger"
                       onClick={() => setCancelTarget(b)}
                     >
-                      キャンセルする
+                      {t('bookings.cancelButton')}
                     </button>
                   )}
                 </div>
@@ -189,52 +196,51 @@ export function MyBookingsPage({ onNavigate }: MyBookingsPageProps) {
 
             {cancelResult ? (
               <>
-                <h2>キャンセル完了</h2>
+                <h2>{t('bookings.cancelComplete')}</h2>
                 <table className="refund-table">
                   <thead>
-                    <tr><th>項目</th><th>金額</th></tr>
+                    <tr><th>{t('bookings.tableItem')}</th><th>{t('bookings.tableAmount')}</th></tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td>宿泊料金合計</td>
+                      <td>{t('bookings.totalAccommodation')}</td>
                       <td>¥{cancelTarget.totalPrice.toLocaleString()}</td>
                     </tr>
                     <tr className="highlight">
-                      <td>返金額（{Math.round(cancelResult.refundRate * 100)}%）</td>
+                      <td>{t('bookings.refundLabel', { rate: Math.round(cancelResult.refundRate * 100) })}</td>
                       <td>¥{cancelResult.refundAmount.toLocaleString()}</td>
                     </tr>
                   </tbody>
                 </table>
                 <div className="cancel-modal-actions">
-                  <button className="modal-keep" onClick={closeCancelModal}>閉じる</button>
+                  <button className="modal-keep" onClick={closeCancelModal}>{t('common.close')}</button>
                 </div>
               </>
             ) : (
               <>
-                <h2>キャンセルの確認</h2>
+                <h2>{t('bookings.cancelTitle')}</h2>
                 <p>
-                  「{cancelTarget.room.accommodation.name}」のキャンセルを実行します。
-                  キャンセルポリシーに従い、下記の返金が適用されます。
+                  {t('bookings.cancelDesc', { name: cancelTarget.room.accommodation.name })}
                 </p>
                 <table className="refund-table">
                   <thead>
-                    <tr><th>項目</th><th>金額</th></tr>
+                    <tr><th>{t('bookings.tableItem')}</th><th>{t('bookings.tableAmount')}</th></tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td>宿泊料金合計</td>
+                      <td>{t('bookings.totalAccommodation')}</td>
                       <td>¥{cancelTarget.totalPrice.toLocaleString()}</td>
                     </tr>
                   </tbody>
                 </table>
                 <div className="cancel-modal-actions">
-                  <button className="modal-keep" onClick={closeCancelModal}>予約を維持する</button>
+                  <button className="modal-keep" onClick={closeCancelModal}>{t('bookings.keepBooking')}</button>
                   <button
                     className="modal-cancel-confirm"
                     onClick={handleCancel}
                     disabled={cancelling}
                   >
-                    {cancelling ? '処理中...' : 'キャンセルを実行'}
+                    {cancelling ? t('common.processing') : t('bookings.confirmCancel')}
                   </button>
                 </div>
               </>
