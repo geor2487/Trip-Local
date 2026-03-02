@@ -76,7 +76,8 @@
     "viewBookings": "マイ予約を確認",
     "backToHome": "トップに戻る",
     "bookingError": "予約に失敗しました",
-    "nightsCount": "{{count}}泊"
+    "nightsCount": "{{count}}泊",
+    "noCharge": "予約確定まで料金はかかりません"
   },
   "auth": {
     "login": "ログイン",

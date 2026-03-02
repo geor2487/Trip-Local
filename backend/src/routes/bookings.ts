@@ -7,7 +7,8 @@ import { calculateRefundAmount, calculateRefundRate } from "../lib/cancellation.
 import { sendCancellationEmail } from "../lib/email.js";
 
 const router = Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2025-02-24.acacia" as any });
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: "2025-02-24.acacia" as any }) : null;
 
 const bookingSchema = z.object({
   roomId: z.string().uuid(),
@@ -122,6 +123,16 @@ router.post("/", authenticate, async (req: Request, res: Response) => {
 
       return { booking, totalPrice };
     });
+
+    // Stripe が設定されていない場合は決済なしで予約確定
+    if (!stripe) {
+      await prisma.booking.update({
+        where: { id: result.booking.id },
+        data: { status: "CONFIRMED" },
+      });
+      res.status(201).json(result.booking);
+      return;
+    }
 
     // トランザクション外で Stripe PaymentIntent 作成
     let paymentIntent: Stripe.PaymentIntent;
@@ -243,7 +254,7 @@ router.put("/:id/cancel", authenticate, async (req: Request, res: Response) => {
     const refundRate = calculateRefundRate(booking.checkIn);
 
     // Stripe 返金
-    if (refundAmount > 0 && booking.stripePaymentIntentId) {
+    if (refundAmount > 0 && booking.stripePaymentIntentId && stripe) {
       await stripe.refunds.create({
         payment_intent: booking.stripePaymentIntentId,
         amount: refundAmount,

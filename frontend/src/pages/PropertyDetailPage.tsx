@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { accommodationApi, bookingApi } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { translateAmenity } from '../lib/amenity-i18n';
 import { tPrefecture, tCity, tName, tDesc, tRoom } from '../lib/content-i18n';
+import { stripePromise } from '../lib/stripe';
 import '../styles/detail.css';
 
 interface Props {
@@ -25,6 +27,39 @@ interface AvailabilityDay {
   remainingRooms: number;
 }
 
+function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: (msg: string) => void }) {
+  const { t } = useTranslation();
+  const stripe = useStripe();
+  const elements = useElements();
+  const [paying, setPaying] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setPaying(true);
+    const { error } = await stripe.confirmPayment({
+      elements,
+      redirect: 'if_required',
+    });
+    if (error) {
+      onError(error.message || t('detail.paymentError'));
+      setPaying(false);
+    } else {
+      onSuccess();
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="checkout-form">
+      <h4 className="checkout-form-title">{t('detail.paymentSection')}</h4>
+      <PaymentElement />
+      <button type="submit" className="book-btn" disabled={!stripe || paying} style={{ marginTop: 16 }}>
+        {paying ? t('common.processing') : t('detail.payButton')}
+      </button>
+    </form>
+  );
+}
+
 const AMENITY_ICONS: Record<string, string> = {
   'Wi-Fi': '📶', '駐車場': '🅿', '朝食付き': '🍳', '囲炉裏': '🔥',
   '縁側': '🏡', '庭園': '🌳', 'BBQ': '🔥', 'オーシャンビュー': '🌊',
@@ -41,9 +76,11 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState(2);
+  const [children, setChildren] = useState(0);
   const [booking, setBooking] = useState(false);
   const [bookError, setBookError] = useState('');
   const [bookSuccess, setBookSuccess] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   const now = new Date();
   const [calYear, setCalYear] = useState(now.getFullYear());
@@ -85,8 +122,12 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
     setBooking(true);
     setBookError('');
     try {
-      await bookingApi.create({ roomId: selectedRoom, checkIn, checkOut, guests });
-      setBookSuccess(true);
+      const data = await bookingApi.create({ roomId: selectedRoom, checkIn, checkOut, guests });
+      if (data.clientSecret) {
+        setClientSecret(data.clientSecret);
+      } else {
+        setBookSuccess(true);
+      }
     } catch (err: any) {
       setBookError(err.message || t('detail.bookingError'));
     } finally {
@@ -294,14 +335,33 @@ export function PropertyDetailPage({ id, onNavigate }: Props) {
               </div>
             </div>
 
-            <button
-              className="book-btn"
-              disabled={booking || !selectedRoom || nights < 1}
-              onClick={handleBook}
-            >
-              {booking ? t('common.processing') : !user ? t('detail.loginToReserve') : t('detail.reserveButton')}
-            </button>
-            <p className="booking-note">{t('detail.noCharge')}</p>
+            <div className="bguests">
+              <div>
+                <div style={{ fontSize: 14 }}>{t('detail.childrenCount', { count: children })}</div>
+              </div>
+              <div className="bguests-ctrl">
+                <button className="bguests-btn" onClick={() => setChildren((c) => Math.max(0, c - 1))}>-</button>
+                <span>{children}</span>
+                <button className="bguests-btn" onClick={() => setChildren((c) => Math.min(5, c + 1))}>+</button>
+              </div>
+            </div>
+
+            {clientSecret && stripePromise ? (
+              <Elements stripe={stripePromise} options={{ clientSecret }}>
+                <CheckoutForm
+                  onSuccess={() => setBookSuccess(true)}
+                  onError={(msg) => setBookError(msg)}
+                />
+              </Elements>
+            ) : (
+              <button
+                className="book-btn"
+                disabled={booking || !selectedRoom || nights < 1}
+                onClick={handleBook}
+              >
+                {booking ? t('common.processing') : !user ? t('detail.loginToReserve') : t('detail.reserveButton')}
+              </button>
+            )}
 
             {bookError && (
               <p style={{ fontSize: 13, color: 'var(--rust)', marginBottom: 16 }}>{bookError}</p>

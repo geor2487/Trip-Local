@@ -373,6 +373,16 @@
   margin-bottom: 20px;
 }
 
+.checkout-form {
+  margin-bottom: 16px;
+}
+.checkout-form-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dark);
+  margin-bottom: 12px;
+}
+
 .price-breakdown { border-top: 1px solid var(--light-border); padding-top: 16px; }
 .price-row {
   display: flex;

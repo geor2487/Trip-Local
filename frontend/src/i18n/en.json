@@ -76,7 +76,8 @@
     "viewBookings": "View my bookings",
     "backToHome": "Back to home",
     "bookingError": "Reservation failed",
-    "nightsCount": "{{count}} nights"
+    "nightsCount": "{{count}} nights",
+    "noCharge": "You won't be charged until booking is confirmed"
   },
   "auth": {
     "login": "Log In",
