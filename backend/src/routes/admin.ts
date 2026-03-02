@@ -56,17 +56,12 @@ router.get("/stats", async (_req: Request, res: Response) => {
     }
 
     res.json({
-      totalUsers,
-      totalAccommodations,
-      totalEvents,
-      totalBookings,
-      revenue: {
-        accommodations: revenueResult._sum.amount ?? 0,
-        events: eventRevenueResult._sum.amount ?? 0,
-        total: (revenueResult._sum.amount ?? 0) + (eventRevenueResult._sum.amount ?? 0),
-      },
-      accommodationsByStatus: accommodationStatusCounts,
-      eventsByStatus: eventStatusCounts,
+      users: totalUsers,
+      accommodations: totalAccommodations,
+      events: totalEvents,
+      bookings: totalBookings,
+      revenue: (revenueResult._sum.amount ?? 0) + (eventRevenueResult._sum.amount ?? 0),
+      byStatus: { ...accommodationStatusCounts, ...eventStatusCounts },
     });
   } catch (e) {
     console.error(e);
