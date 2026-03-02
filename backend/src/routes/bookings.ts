@@ -84,16 +84,16 @@ router.post("/", authenticate, async (req: Request, res: Response) => {
       if (!room || !room.isActive) throw new Error("ROOM_NOT_FOUND");
       if (body.guests > room.capacity) throw new Error("CAPACITY_EXCEEDED");
 
-      // SELECT FOR UPDATE で行ロック取得
-      const blocked = await tx.$queryRaw<{ count: bigint }[]>`
-        SELECT COUNT(*) as count FROM "Availability"
-        WHERE "roomId" = ${body.roomId}
-        AND "date" = ANY(${dates}::date[])
-        AND "isBlocked" = true
-        FOR UPDATE
-      `;
+      // 空き状況チェック
+      const blockedCount = await tx.availability.count({
+        where: {
+          roomId: body.roomId,
+          date: { in: dates },
+          isBlocked: true,
+        },
+      });
 
-      if (Number(blocked[0].count) > 0) {
+      if (blockedCount > 0) {
         throw new Error("ROOM_NOT_AVAILABLE");
       }
 
@@ -200,8 +200,13 @@ router.post("/", authenticate, async (req: Request, res: Response) => {
       res.status(400).json({ code: "VALIDATION_ERROR", message: e.issues[0].message });
       return;
     }
-    console.error(e);
-    res.status(500).json({ code: "INTERNAL_ERROR", message: "サーバーエラー" });
+    if (e.type === "StripeAuthenticationError" || e.type === "StripeAPIError") {
+      console.error("Stripe error:", e.message);
+      res.status(502).json({ code: "PAYMENT_ERROR", message: "決済サービスに接続できません" });
+      return;
+    }
+    console.error("Booking creation error:", e);
+    res.status(500).json({ code: "INTERNAL_ERROR", message: "予約の作成に失敗しました" });
   }
 });
 
