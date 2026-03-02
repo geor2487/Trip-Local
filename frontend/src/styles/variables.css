@@ -1,0 +1,16 @@
+:root {
+  --ink: #1a1510;
+  --paper: #f5f0e8;
+  --earth: #8b6f47;
+  --moss: #5a7a4a;
+  --rust: #c4621a;
+  --warm-gray: #9e9488;
+  --light-border: #ddd6c8;
+  --font-serif: 'Noto Serif JP Variable', 'Source Han Serif Japanese', serif;
+  --font-sans: 'DM Sans Variable', 'DM Sans', sans-serif;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}

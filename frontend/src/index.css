@@ -1,0 +1,33 @@
+@import "tailwindcss";
+@import "./styles/variables.css";
+
+@theme {
+  --color-ink: #1a1510;
+  --color-paper: #f5f0e8;
+  --color-earth: #8b6f47;
+  --color-moss: #5a7a4a;
+  --color-rust: #c4621a;
+  --color-warm-gray: #9e9488;
+  --color-light-border: #ddd6c8;
+  --font-serif: 'Noto Serif JP Variable', 'Source Han Serif Japanese', serif;
+  --font-sans: 'DM Sans Variable', 'DM Sans', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
