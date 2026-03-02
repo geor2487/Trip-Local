@@ -84,16 +84,17 @@ router.post("/", authenticate, async (req: Request, res: Response) => {
       if (!room || !room.isActive) throw new Error("ROOM_NOT_FOUND");
       if (body.guests > room.capacity) throw new Error("CAPACITY_EXCEEDED");
 
-      // 空き状況チェック
-      const blockedCount = await tx.availability.count({
+      // 空き状況チェック（実際のアクティブ予約で判定）
+      const overlapping = await tx.booking.count({
         where: {
           roomId: body.roomId,
-          date: { in: dates },
-          isBlocked: true,
+          status: { in: ["PENDING", "CONFIRMED"] },
+          checkIn: { lt: checkOut },
+          checkOut: { gt: checkIn },
         },
       });
 
-      if (blockedCount > 0) {
+      if (overlapping > 0) {
         throw new Error("ROOM_NOT_AVAILABLE");
       }
 
