@@ -1,0 +1,132 @@
+{
+  "nav": {
+    "accommodations": "Find Stays",
+    "events": "Find Experiences",
+    "myBookings": "My Bookings",
+    "ownerDashboard": "Property Management",
+    "adminDashboard": "Admin",
+    "login": "Log In",
+    "logout": "Log Out",
+    "backToSearch": "← Back to results"
+  },
+  "home": {
+    "heroTitle": "Discover the charm of rural Japan.",
+    "heroSubtitle": "Find stays and experiences, all in one place",
+    "searchArea": "Area",
+    "searchAreaPlaceholder": "e.g. Kyoto, Hakone, Shirakawago",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "guests": "Guests",
+    "guestsUnit": "",
+    "search": "Search",
+    "featured": "Featured Properties",
+    "perNight": "/night",
+    "noResults": "No properties found matching your criteria"
+  },
+  "detail": {
+    "amenities": "Amenities",
+    "availability": "Availability",
+    "reservationCard": "Reservation",
+    "nightCount": "{{count}} nights",
+    "guestCount": "{{count}} guests",
+    "totalPrice": "Total",
+    "reserve": "Reserve",
+    "cancellationPolicy": "Cancellation Policy",
+    "cancellation7days": "7+ days before check-in: Full refund",
+    "cancellation3days": "3–6 days before check-in: 50% refund",
+    "cancellation2days": "Within 2 days of check-in: No refund",
+    "agreeToCancellation": "I agree to the cancellation policy",
+    "confirmReservation": "Confirm Reservation"
+  },
+  "auth": {
+    "login": "Log In",
+    "register": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "loginButton": "Log In",
+    "registerButton": "Sign Up",
+    "switchToRegister": "Don't have an account?",
+    "switchToLogin": "Already have an account?"
+  },
+  "bookings": {
+    "title": "My Bookings",
+    "upcoming": "Upcoming",
+    "past": "Past Bookings",
+    "noBookings": "No bookings yet",
+    "cancel": "Cancel",
+    "cancelConfirm": "Cancel this booking?",
+    "refundAmount": "Refund amount",
+    "status": {
+      "PENDING": "Pending",
+      "CONFIRMED": "Confirmed",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
+    }
+  },
+  "events": {
+    "title": "Find Experiences",
+    "search": "Search by keyword",
+    "allCategories": "All",
+    "free": "Free",
+    "remaining": "{{count}} spots left",
+    "full": "Full",
+    "register": "Register",
+    "registered": "Registered",
+    "cancelRegistration": "Cancel Registration",
+    "ticketCode": "Ticket Code",
+    "categories": {
+      "文化体験": "Cultural",
+      "アウトドア": "Outdoor",
+      "食": "Food",
+      "ワークショップ": "Workshop",
+      "祭り": "Festival",
+      "その他": "Other"
+    }
+  },
+  "owner": {
+    "title": "Property Management",
+    "tabs": {
+      "accommodations": "Properties",
+      "bookings": "Bookings"
+    },
+    "addAccommodation": "Add Property",
+    "editAccommodation": "Edit",
+    "manageRooms": "Manage Rooms",
+    "addRoom": "Add Room",
+    "editRoom": "Edit",
+    "roomCount": "{{count}} rooms",
+    "save": "Save",
+    "delete": "Suspend"
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "stats": {
+      "users": "Users",
+      "accommodations": "Properties",
+      "events": "Events",
+      "bookings": "Bookings",
+      "revenue": "Total Revenue"
+    },
+    "tabs": {
+      "users": "Users",
+      "accommodations": "Properties",
+      "events": "Events",
+      "bookings": "Bookings"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "yen": "¥{{amount}}"
+  }
+}

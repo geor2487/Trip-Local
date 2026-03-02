@@ -100,3 +100,21 @@
 }
 .user-nav-link:hover { color: var(--ink); }
 .user-nav-link.active { color: var(--ink); font-weight: 500; }
+
+.lang-toggle {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--warm-gray);
+  border: 1px solid var(--light-border);
+  border-radius: 3px;
+  padding: 4px 8px;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all 0.2s;
+}
+.lang-toggle:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}

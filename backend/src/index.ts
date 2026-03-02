@@ -7,6 +7,9 @@ import authRouter from "./routes/auth.js";
 import accommodationsRouter from "./routes/accommodations.js";
 import bookingsRouter from "./routes/bookings.js";
 import paymentsRouter from "./routes/payments.js";
+import ownerRouter from "./routes/owner.js";
+import eventsRouter from "./routes/events.js";
+import adminRouter from "./routes/admin.js";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "4000");
@@ -27,6 +30,9 @@ app.use("/api/auth", authRouter);
 app.use("/api/accommodations", accommodationsRouter);
 app.use("/api/bookings", bookingsRouter);
 app.use("/api/payments", paymentsRouter);
+app.use("/api/owner", ownerRouter);
+app.use("/api/events", eventsRouter);
+app.use("/api/admin", adminRouter);
 
 // Health check
 app.get("/api/health", (_req, res) => {

@@ -48,9 +48,11 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  accommodations Accommodation[]
-  bookings       Booking[]
-  refreshTokens  RefreshToken[]
+  accommodations     Accommodation[]
+  bookings           Booking[]
+  refreshTokens      RefreshToken[]
+  organizedEvents    Event[]
+  eventRegistrations EventRegistration[]
 
   @@index([email])
   @@index([googleId])
@@ -169,6 +171,89 @@ model Payment {
   updatedAt             DateTime      @updatedAt
 
   booking Booking? @relation(fields: [bookingId], references: [id])
+
+  @@index([stripePaymentIntentId])
+}
+
+// ================================================================
+// イベント予約システム
+// ================================================================
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+enum RegistrationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model Event {
+  id            String      @id @default(uuid())
+  organizerId   String
+  title         String
+  description   String
+  category      String
+  date          DateTime
+  endDate       DateTime?
+  location      String
+  city          String
+  prefecture    String
+  coverImage    String?
+  images        String[]
+  capacity      Int
+  price         Int         @default(0)
+  isFree        Boolean     @default(true)
+  status        EventStatus @default(DRAFT)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  organizer     User                @relation(fields: [organizerId], references: [id])
+  registrations EventRegistration[]
+
+  @@index([organizerId])
+  @@index([category])
+  @@index([city])
+  @@index([date])
+  @@index([status])
+}
+
+model EventRegistration {
+  id                    String             @id @default(uuid())
+  eventId               String
+  userId                String
+  status                RegistrationStatus @default(PENDING)
+  stripePaymentIntentId String?            @unique
+  ticketCode            String?            @unique
+  cancelledAt           DateTime?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  event   Event   @relation(fields: [eventId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+  payment EventPayment?
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+}
+
+model EventPayment {
+  id                    String        @id @default(uuid())
+  stripePaymentIntentId String        @unique
+  amount                Int
+  currency              String        @default("jpy")
+  status                PaymentStatus
+  registrationId        String        @unique
+  refundedAmount        Int?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  registration EventRegistration @relation(fields: [registrationId], references: [id])
 
   @@index([stripePaymentIntentId])
 }

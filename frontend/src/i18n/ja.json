@@ -1,0 +1,132 @@
+{
+  "nav": {
+    "accommodations": "宿泊を探す",
+    "events": "体験を探す",
+    "myBookings": "マイ予約",
+    "ownerDashboard": "施設管理",
+    "adminDashboard": "管理画面",
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "backToSearch": "検索結果に戻る"
+  },
+  "home": {
+    "heroTitle": "地方の魅力を、旅の体験に。",
+    "heroSubtitle": "宿泊も体験も、ここから探そう",
+    "searchArea": "エリア",
+    "searchAreaPlaceholder": "例: 京都、箱根、白川郷",
+    "checkIn": "チェックイン",
+    "checkOut": "チェックアウト",
+    "guests": "宿泊人数",
+    "guestsUnit": "名",
+    "search": "検索",
+    "featured": "注目の施設",
+    "perNight": "/泊",
+    "noResults": "条件に合う施設が見つかりませんでした"
+  },
+  "detail": {
+    "amenities": "設備・アメニティ",
+    "availability": "空き状況",
+    "reservationCard": "予約",
+    "nightCount": "{{count}}泊",
+    "guestCount": "{{count}}名",
+    "totalPrice": "合計金額",
+    "reserve": "予約する",
+    "cancellationPolicy": "キャンセルポリシー",
+    "cancellation7days": "チェックイン7日前まで: 全額返金",
+    "cancellation3days": "チェックイン3〜6日前: 宿泊料金の50%返金",
+    "cancellation2days": "チェックイン2日前〜当日: 返金なし",
+    "agreeToCancellation": "キャンセルポリシーに同意する",
+    "confirmReservation": "予約を確定する"
+  },
+  "auth": {
+    "login": "ログイン",
+    "register": "新規登録",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "name": "お名前",
+    "loginButton": "ログイン",
+    "registerButton": "登録する",
+    "switchToRegister": "アカウントをお持ちでない方",
+    "switchToLogin": "アカウントをお持ちの方"
+  },
+  "bookings": {
+    "title": "マイ予約",
+    "upcoming": "予定・確定済み",
+    "past": "過去の予約",
+    "noBookings": "予約はまだありません",
+    "cancel": "キャンセル",
+    "cancelConfirm": "この予約をキャンセルしますか？",
+    "refundAmount": "返金額",
+    "status": {
+      "PENDING": "決済中",
+      "CONFIRMED": "確定済み",
+      "COMPLETED": "完了",
+      "CANCELLED": "キャンセル済み"
+    }
+  },
+  "events": {
+    "title": "体験を探す",
+    "search": "キーワードで検索",
+    "allCategories": "すべて",
+    "free": "無料",
+    "remaining": "残り{{count}}席",
+    "full": "満席",
+    "register": "参加申し込み",
+    "registered": "申し込み済み",
+    "cancelRegistration": "申し込みキャンセル",
+    "ticketCode": "チケットコード",
+    "categories": {
+      "文化体験": "文化体験",
+      "アウトドア": "アウトドア",
+      "食": "食",
+      "ワークショップ": "ワークショップ",
+      "祭り": "祭り",
+      "その他": "その他"
+    }
+  },
+  "owner": {
+    "title": "施設管理",
+    "tabs": {
+      "accommodations": "施設管理",
+      "bookings": "予約管理"
+    },
+    "addAccommodation": "施設を追加",
+    "editAccommodation": "編集",
+    "manageRooms": "部屋管理",
+    "addRoom": "部屋を追加",
+    "editRoom": "編集",
+    "roomCount": "{{count}}室",
+    "save": "保存",
+    "delete": "停止"
+  },
+  "admin": {
+    "title": "管理画面",
+    "stats": {
+      "users": "ユーザー数",
+      "accommodations": "施設数",
+      "events": "イベント数",
+      "bookings": "予約数",
+      "revenue": "総売上"
+    },
+    "tabs": {
+      "users": "ユーザー管理",
+      "accommodations": "施設管理",
+      "events": "イベント管理",
+      "bookings": "予約一覧"
+    }
+  },
+  "common": {
+    "loading": "読み込み中...",
+    "error": "エラーが発生しました",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "close": "閉じる",
+    "confirm": "確認",
+    "back": "戻る",
+    "next": "次へ",
+    "previous": "前へ",
+    "yen": "¥{{amount}}"
+  }
+}

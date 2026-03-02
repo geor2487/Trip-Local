@@ -112,3 +112,74 @@ export const bookingApi = {
   cancel: (id: string, reason?: string) =>
     apiFetch(`/bookings/${id}/cancel`, { method: 'PUT', body: JSON.stringify({ reason }) }),
 };
+
+// Owner API
+export const ownerApi = {
+  listAccommodations: () => apiFetch('/owner'),
+  createAccommodation: (data: Record<string, unknown>) =>
+    apiFetch('/owner', { method: 'POST', body: JSON.stringify(data) }),
+  updateAccommodation: (id: string, data: Record<string, unknown>) =>
+    apiFetch(`/owner/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteAccommodation: (id: string) =>
+    apiFetch(`/owner/${id}`, { method: 'DELETE' }),
+  listRooms: (accId: string) => apiFetch(`/owner/${accId}/rooms`),
+  createRoom: (accId: string, data: Record<string, unknown>) =>
+    apiFetch(`/owner/${accId}/rooms`, { method: 'POST', body: JSON.stringify(data) }),
+  updateRoom: (accId: string, roomId: string, data: Record<string, unknown>) =>
+    apiFetch(`/owner/${accId}/rooms/${roomId}`, { method: 'PUT', body: JSON.stringify(data) }),
+  listBookings: (accId: string) => apiFetch(`/owner/${accId}/bookings`),
+};
+
+// Event API
+export const eventApi = {
+  list: (params?: Record<string, string>) => {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return apiFetch(`/events${qs}`, { skipAuth: true });
+  },
+  get: (id: string) => apiFetch(`/events/${id}`, { skipAuth: true }),
+  register: (id: string) =>
+    apiFetch(`/events/${id}/register`, { method: 'POST' }),
+  myRegistrations: () => apiFetch('/events/my/registrations'),
+  cancelRegistration: (id: string) =>
+    apiFetch(`/events/${id}/cancel-registration`, { method: 'PUT' }),
+  create: (data: Record<string, unknown>) =>
+    apiFetch('/events', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Record<string, unknown>) =>
+    apiFetch(`/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  publish: (id: string) =>
+    apiFetch(`/events/${id}/publish`, { method: 'PUT' }),
+  cancel: (id: string) =>
+    apiFetch(`/events/${id}/cancel`, { method: 'PUT' }),
+  participants: (id: string) => apiFetch(`/events/${id}/participants`),
+};
+
+// Admin API
+export const adminApi = {
+  stats: () => apiFetch('/admin/stats'),
+  users: (params?: Record<string, string>) => {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return apiFetch(`/admin/users${qs}`);
+  },
+  updateUserRole: (id: string, role: string) =>
+    apiFetch(`/admin/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role }) }),
+  deactivateUser: (id: string) =>
+    apiFetch(`/admin/users/${id}/deactivate`, { method: 'PUT' }),
+  accommodations: (params?: Record<string, string>) => {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return apiFetch(`/admin/accommodations${qs}`);
+  },
+  updateAccommodationStatus: (id: string, status: string) =>
+    apiFetch(`/admin/accommodations/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  events: (params?: Record<string, string>) => {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return apiFetch(`/admin/events${qs}`);
+  },
+  bookings: (params?: Record<string, string>) => {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return apiFetch(`/admin/bookings${qs}`);
+  },
+  payments: (params?: Record<string, string>) => {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return apiFetch(`/admin/payments${qs}`);
+  },
+};

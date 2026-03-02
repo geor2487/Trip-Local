@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../lib/auth-context';
 import '../styles/nav.css';
 
@@ -9,6 +10,11 @@ interface NavbarProps {
 
 export function Navbar({ onNavigate, currentPage, showBack }: NavbarProps) {
   const { user, logout } = useAuth();
+  const { t, i18n } = useTranslation();
+
+  const toggleLang = () => {
+    i18n.changeLanguage(i18n.language === 'ja' ? 'en' : 'ja');
+  };
 
   return (
     <nav className="site-nav">
@@ -18,7 +24,7 @@ export function Navbar({ onNavigate, currentPage, showBack }: NavbarProps) {
 
       {showBack ? (
         <button className="nav-back" onClick={() => onNavigate('home')}>
-          ← 検索結果に戻る
+          {t('nav.backToSearch')}
         </button>
       ) : user ? (
         <div className="user-nav">
@@ -26,28 +32,63 @@ export function Navbar({ onNavigate, currentPage, showBack }: NavbarProps) {
             className={`user-nav-link${currentPage === 'home' ? ' active' : ''}`}
             onClick={() => onNavigate('home')}
           >
-            宿泊を探す
+            {t('nav.accommodations')}
+          </button>
+          <button
+            className={`user-nav-link${currentPage === 'events' ? ' active' : ''}`}
+            onClick={() => onNavigate('events')}
+          >
+            {t('nav.events')}
           </button>
           <button
             className={`user-nav-link${currentPage === 'bookings' ? ' active' : ''}`}
             onClick={() => onNavigate('bookings')}
           >
-            マイ予約
+            {t('nav.myBookings')}
+          </button>
+          {(user.role === 'OWNER' || user.role === 'ADMIN') && (
+            <button
+              className={`user-nav-link${currentPage === 'owner-dashboard' ? ' active' : ''}`}
+              onClick={() => onNavigate('owner-dashboard')}
+            >
+              {t('nav.ownerDashboard')}
+            </button>
+          )}
+          {user.role === 'ADMIN' && (
+            <button
+              className={`user-nav-link${currentPage === 'admin-dashboard' ? ' active' : ''}`}
+              onClick={() => onNavigate('admin-dashboard')}
+            >
+              {t('nav.adminDashboard')}
+            </button>
+          )}
+          <button className="user-nav-link lang-toggle" onClick={toggleLang}>
+            {i18n.language === 'ja' ? 'EN' : 'JA'}
           </button>
           <button className="user-nav-link" onClick={logout}>
-            ログアウト
+            {t('nav.logout')}
           </button>
         </div>
       ) : (
         <ul className="nav-links">
           <li>
             <button className="nav-link" onClick={() => onNavigate('home')}>
-              宿泊を探す
+              {t('nav.accommodations')}
+            </button>
+          </li>
+          <li>
+            <button className="nav-link" onClick={() => onNavigate('events')}>
+              {t('nav.events')}
+            </button>
+          </li>
+          <li>
+            <button className="lang-toggle" onClick={toggleLang}>
+              {i18n.language === 'ja' ? 'EN' : 'JA'}
             </button>
           </li>
           <li>
             <button className="nav-cta" onClick={() => onNavigate('login')}>
-              ログイン
+              {t('nav.login')}
             </button>
           </li>
         </ul>

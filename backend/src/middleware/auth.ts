@@ -9,6 +9,16 @@ declare global {
   }
 }
 
+export function requireRole(...roles: string[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      res.status(403).json({ code: "FORBIDDEN", message: "権限がありません" });
+      return;
+    }
+    next();
+  };
+}
+
 export function authenticate(req: Request, res: Response, next: NextFunction): void {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) {
