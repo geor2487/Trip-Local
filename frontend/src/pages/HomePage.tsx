@@ -42,6 +42,7 @@ export function HomePage({ onNavigate, searchParams }: HomePageProps) {
   const [guests, setGuests] = useState(2);
   const [children, setChildren] = useState(0);
   const [activeRegion, setActiveRegion] = useState('hokkaido');
+  const [guestDropdownOpen, setGuestDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState<Record<string, string>>(
     searchParams ? Object.fromEntries(Object.entries(searchParams).filter(([, v]) => v)) : {}
   );
@@ -49,6 +50,20 @@ export function HomePage({ onNavigate, searchParams }: HomePageProps) {
   const currentHero = REGION_HEROES[activeRegion];
   const today = new Date().toISOString().split('T')[0];
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const guestDropdownRef = useRef<HTMLDivElement>(null);
+  const checkInRef = useRef<HTMLInputElement>(null);
+  const checkOutRef = useRef<HTMLInputElement>(null);
+
+  // Close guest dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (guestDropdownRef.current && !guestDropdownRef.current.contains(e.target as Node)) {
+        setGuestDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const {
     data,
@@ -98,6 +113,7 @@ export function HomePage({ onNavigate, searchParams }: HomePageProps) {
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
+    setGuestDropdownOpen(false);
     const params: Record<string, string> = {};
     if (location) params.location = location;
     if (checkIn) params.checkIn = checkIn;
@@ -117,110 +133,174 @@ export function HomePage({ onNavigate, searchParams }: HomePageProps) {
 
   return (
     <>
-      {/* HERO */}
+      {/* ── HERO ── */}
       <section className="hero">
-        <div className="hero-left">
+        <div className="hero-bg" key={activeRegion}>
+          <img src={currentHero.image} alt={t(currentHero.nameKey)} />
+          <div className="hero-overlay" />
+        </div>
+
+        <div className="hero-content">
           <p className="eyebrow">{t('home.eyebrow')}</p>
           <h1 className="hero-title">
             {t('home.heroTitle1')}<br />
             {t('home.heroTitle2')}<em>{t('home.heroTitle3')}</em>
           </h1>
-          <p className="hero-desc">
-            {t('home.heroDesc')}
-          </p>
+          <p className="hero-subtitle">{t('home.heroSubtitle')}</p>
 
-          {/* SEARCH CARD */}
+          {/* Agoda-style vertical search card */}
           <form className="search-card" onSubmit={handleSearch}>
-            <div className="search-row">
-              <div className="field-group full">
-                <label className="search-label">{t('home.searchDestination')}</label>
-                <input
-                  type="text"
-                  className="field-input"
-                  placeholder={t('home.searchDestinationPlaceholder')}
+            {/* Destination */}
+            <div className="sc-field">
+              <label className="sc-label">{t('home.searchDestination')}</label>
+              <div className="sc-input-wrap">
+                <svg className="sc-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <select
+                  className="sc-input sc-select"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                />
+                >
+                  <option value="">{t('home.allAreas')}</option>
+                  {REGION_KEYS.map((r) => (
+                    <option key={r} value={t(`home.regions.${r}.name`)}>{t(`home.regions.${r}.name`)}</option>
+                  ))}
+                </select>
               </div>
             </div>
-            <div className="search-row">
-              <div className="field-group">
-                <label className="search-label">{t('home.checkIn')}</label>
-                <input
-                  type="date"
-                  className="field-input"
-                  min={today}
-                  value={checkIn}
-                  onChange={(e) => {
-                    setCheckIn(e.target.value);
-                    if (checkOut && e.target.value >= checkOut) setCheckOut('');
-                  }}
-                />
-              </div>
-              <div className="field-group">
-                <label className="search-label">{t('home.checkOut')}</label>
-                <input
-                  type="date"
-                  className="field-input"
-                  min={checkIn || today}
-                  value={checkOut}
-                  onChange={(e) => setCheckOut(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="field-group" style={{ marginBottom: 0 }}>
-              <label className="search-label">{t('home.guests')}</label>
-              <div className="guests-row">
-                <span className="guests-label">{t('home.adults')}</span>
-                <div className="guests-ctrl">
-                  <button type="button" className="guests-btn" onClick={() => updateGuests(-1)}>-</button>
-                  <span className="guests-count">{guests}</span>
-                  <button type="button" className="guests-btn" onClick={() => updateGuests(1)}>+</button>
+
+            {/* Dates row */}
+            <div className="sc-dates-row">
+              <div className="sc-date-field" onClick={() => checkInRef.current?.showPicker()}>
+                <svg className="sc-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <div>
+                  <div className="sc-date-label">{t('home.checkIn')}</div>
+                  <input
+                    ref={checkInRef}
+                    type="date"
+                    className="sc-date-input"
+                    min={today}
+                    value={checkIn}
+                    onChange={(e) => {
+                      setCheckIn(e.target.value);
+                      if (checkOut && e.target.value >= checkOut) setCheckOut('');
+                    }}
+                  />
                 </div>
               </div>
-              <div className="guests-row">
-                <span className="guests-label">{t('home.children')}</span>
-                <div className="guests-ctrl">
-                  <button type="button" className="guests-btn" onClick={() => updateChildren(-1)}>-</button>
-                  <span className="guests-count">{children}</span>
-                  <button type="button" className="guests-btn" onClick={() => updateChildren(1)}>+</button>
+              <div className="sc-date-divider" />
+              <div className="sc-date-field" onClick={() => checkOutRef.current?.showPicker()}>
+                <svg className="sc-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <div>
+                  <div className="sc-date-label">{t('home.checkOut')}</div>
+                  <input
+                    ref={checkOutRef}
+                    type="date"
+                    className="sc-date-input"
+                    min={checkIn || today}
+                    value={checkOut}
+                    onChange={(e) => setCheckOut(e.target.value)}
+                  />
                 </div>
               </div>
             </div>
+
+            {/* Guests */}
+            <div className="sc-field sc-field--guests" ref={guestDropdownRef}>
+              <div className="sc-input-wrap" onClick={() => setGuestDropdownOpen(!guestDropdownOpen)} role="button" tabIndex={0}>
+                <svg className="sc-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <span className="sc-guests-text">{t('home.guestsDropdownLabel', { adults: guests, children })}</span>
+                <svg className="sc-chevron" width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </div>
+              {guestDropdownOpen && (
+                <div className="guests-dropdown">
+                  <div className="guests-row">
+                    <span className="guests-label">{t('home.adults')}</span>
+                    <div className="guests-ctrl">
+                      <button type="button" className="guests-btn" onClick={() => updateGuests(-1)}>-</button>
+                      <span className="guests-count">{guests}</span>
+                      <button type="button" className="guests-btn" onClick={() => updateGuests(1)}>+</button>
+                    </div>
+                  </div>
+                  <div className="guests-row">
+                    <span className="guests-label">{t('home.children')}</span>
+                    <div className="guests-ctrl">
+                      <button type="button" className="guests-btn" onClick={() => updateChildren(-1)}>-</button>
+                      <span className="guests-count">{children}</span>
+                      <button type="button" className="guests-btn" onClick={() => updateChildren(1)}>+</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button type="submit" className="search-btn">{t('home.searchButton')}</button>
           </form>
         </div>
 
-        <div className="hero-right">
-          <div className="hero-img-main" key={activeRegion}>
-            <img
-              src={currentHero.image}
-              alt={t(currentHero.nameKey)}
-            />
-            <div className="hero-caption">
-              <span className="hero-caption-name">{t(currentHero.nameKey)}</span>
-              <span className="hero-caption-region">{t(`home.regions.${activeRegion}.name`)}</span>
-            </div>
+        {/* Region pills */}
+        <div className="region-pills">
+          {REGION_KEYS.map((r) => (
+            <button
+              key={r}
+              className={`pill${activeRegion === r ? ' active' : ''}`}
+              onClick={() => setActiveRegion(r)}
+            >
+              {t(`home.regions.${r}.name`)}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* ── TRUST / STATS ── */}
+      <section className="trust-section">
+        <h2 className="trust-heading">{t('home.trustHeading')}</h2>
+        <div className="trust-stats">
+          <div className="trust-stat">
+            <span className="trust-stat-num">1,240+</span>
+            <span className="trust-stat-label">{t('home.statsProperties')}</span>
           </div>
-          <div className="region-pills">
-            {REGION_KEYS.map((r) => (
-              <button
-                key={r}
-                className={`pill${activeRegion === r ? ' active' : ''}`}
-                onClick={() => setActiveRegion(r)}
-              >
-                {t(`home.regions.${r}.name`)}
-              </button>
-            ))}
+          <div className="trust-stat">
+            <span className="trust-stat-num">5</span>
+            <span className="trust-stat-label">{t('home.statsRegions')}</span>
           </div>
-          <div className="hero-tag">
-            <div className="hero-tag-num">1,240+</div>
-            <div className="hero-tag-txt">{t('home.totalProperties')}</div>
+          <div className="trust-stat">
+            <span className="trust-stat-num">15</span>
+            <span className="trust-stat-label">{t('home.statsPrefectures')}</span>
+          </div>
+          <div className="trust-stat">
+            <span className="trust-stat-num">10+</span>
+            <span className="trust-stat-label">{t('home.statsExperiences')}</span>
           </div>
         </div>
       </section>
 
-      {/* LISTINGS */}
+      {/* ── POPULAR DESTINATIONS ── */}
+      <section className="destinations-section">
+        <h2 className="section-title">{t('home.popularDestinations')}</h2>
+        <div className="destinations-grid">
+          {REGION_KEYS.map((r) => (
+            <button
+              key={r}
+              className="destination-card"
+              onClick={() => {
+                setLocation(t(`home.regions.${r}.name`));
+                setSearchQuery({ location: t(`home.regions.${r}.name`) });
+              }}
+            >
+              <div className="destination-img">
+                <img src={REGION_HEROES[r].image} alt={t(`home.regions.${r}.name`)} />
+                <div className="destination-overlay" />
+              </div>
+              <div className="destination-info">
+                <h3 className="destination-name">{t(`home.regions.${r}.name`)}</h3>
+                <p className="destination-landmark">{t(REGION_HEROES[r].nameKey)}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FEATURED LISTINGS ── */}
       <section className="section-listings">
         <div className="section-header">
           <h2 className="section-title">{t('home.featured')}</h2>
@@ -234,18 +314,25 @@ export function HomePage({ onNavigate, searchParams }: HomePageProps) {
             >
               <div className="listing-img">
                 <img className="listing-img-inner" src={a.coverImage} alt={a.name} />
+                {a.minPrice && (
+                  <span className="listing-price-badge">
+                    ¥{a.minPrice.toLocaleString()}{i18n.language === 'ja' ? '〜' : '+'}
+                  </span>
+                )}
                 {a.amenities[0] && (
                   <span className="listing-badge">{translateAmenity(a.amenities[0], i18n.language)}</span>
                 )}
               </div>
-              <p className="listing-region">{tPrefecture(a.prefecture, i18n.language)} · {tCity(a.city, i18n.language)}</p>
-              <h3 className="listing-name">{tName(a.name, i18n.language)}</h3>
-              <div className="listing-meta">
-                <span>{t('home.maxGuests', { count: a.maxCapacity ?? 0 })}</span>
-              </div>
-              <div className="listing-price">
-                <span className="price-num">¥{a.minPrice?.toLocaleString() ?? '—'}{i18n.language === 'ja' ? '〜' : '+'}</span>
-                <span className="price-unit">{t('home.perNightUnit')}</span>
+              <div className="listing-body">
+                <p className="listing-region">{tPrefecture(a.prefecture, i18n.language)} · {tCity(a.city, i18n.language)}</p>
+                <h3 className="listing-name">{tName(a.name, i18n.language)}</h3>
+                <div className="listing-meta">
+                  <span>{t('home.maxGuests', { count: a.maxCapacity ?? 0 })}</span>
+                </div>
+                <div className="listing-price">
+                  <span className="price-num">¥{a.minPrice?.toLocaleString() ?? '—'}{i18n.language === 'ja' ? '〜' : '+'}</span>
+                  <span className="price-unit">{t('home.perNightUnit')}</span>
+                </div>
               </div>
             </button>
           ))}
@@ -268,7 +355,7 @@ export function HomePage({ onNavigate, searchParams }: HomePageProps) {
         )}
       </section>
 
-      {/* FOOTER */}
+      {/* ── FOOTER ── */}
       <footer className="site-footer">
         <div className="footer-logo">Trip<span>Local</span></div>
         <p className="footer-copy">{t('home.footerCopy')}</p>
